@@ -1,0 +1,9 @@
+{
+    "name": "lua-parser",
+    "version-string": "0.1.0",
+    "dependencies": [
+        "spdlog",
+        "boost-spirit",
+        "boost-graph"
+    ]
+}
