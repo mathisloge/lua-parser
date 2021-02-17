@@ -10,7 +10,12 @@ find_package(Boost REQUIRED COMPONENTS graph)
 
 add_executable(LuaParser 
     src/main.cpp
+    #src/grammar/chunk.cpp
+    #src/grammar/chunk_def.cpp
+    src/chunk.cpp
 )
+
+set_property(TARGET LuaParser PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(LuaParser PRIVATE
     Boost::headers
