@@ -1,11 +1,14 @@
 #include "chunk_def.hpp"
 #include "chunk.hpp"
-namespace sre::lua::parser::impl
+namespace sre::lua::parser
 {
-    void initBinOp()
+    namespace impl
     {
-        // clang-format off
-        bin_op.add
+#if 1
+        void initBinOp()
+        {
+            // clang-format off
+        binary_op.add
             ("+", ast::op_plus)
             ("-", ast::op_minus)
             ("*", ast::op_times)
@@ -27,50 +30,59 @@ namespace sre::lua::parser::impl
             ("~=", ast::op_inequal)
             ("and", ast::op_and_key)
             ("or", ast::op_or_key);
-        // clang-format on
-    }
-    void initUnaryOp()
-    {
-        // clang-format off
+            // clang-format on
+        }
+#endif
+        void initUnaryOp()
+        {
+            // clang-format off
         unary_op.add
             ("-", ast::op_minus)
             ("not", ast::op_not)
             ("#", ast::op_prefix)
             ("~", ast::op_xor);
-        // clang-format on
+            // clang-format on
+        }
+
+        /**
+         * @brief 
+         * @see 3.1 – Lexical Conventions
+         */
+        void initKeywords()
+        {
+            // clang-format off
+            keywords.add
+                ("and")
+                ("break")
+                ("do")
+                ("else")
+                ("elseif")
+                ("end")
+                ("false")
+                ("for")
+                ("function")
+                ("goto")
+                ("if")
+                ("in")
+                ("local")
+                ("nil")
+                ("not")
+                ("or")
+                ("repeat")
+                ("return")
+                ("then")
+                ("true")
+                ("until")
+                ("while");
+            // clang-format on
+        }
     }
 
-    /**
-     * @brief 
-     * @see 3.1 – Lexical Conventions
-     */
-    void initKeywords()
+    impl::chunk_type chunk()
     {
-        // clang-format off
-        keywords.add
-            //("and")
-            ("break")
-            ("do")
-            ("else")
-            ("elseif")
-            ("end")
-            ("false")
-            ("for")
-            ("function")
-            ("goto")
-            ("if")
-            ("in")
-            ("local")
-            ("nil")
-            //("not")
-            //("or")
-            ("repeat")
-            ("return")
-            ("then")
-            ("true")
-            ("until")
-            ("while");
-        // clang-format on
+        impl::initBinOp();
+        impl::initUnaryOp();
+        impl::initKeywords();
+        return impl::chunk_expr;
     }
-
 }
