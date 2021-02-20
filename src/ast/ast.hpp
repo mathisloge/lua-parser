@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <list>
+#include <map>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
@@ -20,12 +21,11 @@ namespace sre::lua::ast
         out << "nil";
         return out;
     }
-    struct chunk;
-    //struct block;
     //struct statement;
     struct expression;
     struct binary;
     struct unary;
+    struct function;
     //struct functiondef;
     //struct prefixexp;
     //struct tableconstructor;
@@ -80,65 +80,102 @@ namespace sre::lua::ast
         op_prefix          // => #
     };
 
-    struct binary
+    struct binary : x3::position_tagged
     {
         //exp lhs_;
         optoken operator_;
         exp rhs_;
     };
-    struct unary
+    struct unary : x3::position_tagged
     {
         optoken operator_;
         exp rhs_;
     };
 
-    struct expression
+    struct expression : x3::position_tagged
     {
         exp first_;
         exp rest_;
     };
 
-    //struct label
-    //{
-    //    Name name;
-    //};
-
-    //struct expression : x3::position_tagged
-    //{
-    //    operand op_;
-    //};
-
-    using explist = std::list<expression>;
-
-    using retstat = explist;
-
-    //struct statement : x3::variant<label>
-    //{
-    //    using base_type::base_type;
-    //    using base_type::operator=;
-    //};
-
-    //struct block
-    //{
-    //    std::list<statement> stat_;
-    //    retstat retstat_;
-    //};
-
-    struct stat
+    struct label : Name
     {
-        std::string test;
+        using Name::Name;
     };
 
-    struct block
+    struct var : Name
+    {
+        using Name::Name;
+    };
+
+    struct funcname
+    {
+        Name name_;
+        std::list<Name> chain_;
+        Name self_chain_;
+    };
+
+    struct varlist
+    {
+        std::list<var> vars_;
+    };
+
+    struct stat : x3::variant<
+                      nil,
+                      label,
+                      boost::recursive_wrapper<function> //! needed since function depends on block and block on statement and statement on function...
+                      >
+    {
+        using base_type::base_type;
+        using base_type::operator=;
+    };
+
+    using explist = std::list<expression>;
+    using retstat = explist;
+
+    struct block : x3::position_tagged
     {
         std::list<stat> stat_;
         retstat retstat_;
     };
-    struct chunk
+    struct chunk : x3::position_tagged
     {
+        block block_;
+    };
+    using namelist = std::list<Name>;
+    using parlist = namelist;
+    struct function
+    {
+        funcname funcname_;
+        parlist parameters_;
         block block_;
     };
 
     using boost::fusion::operator<<;
+
+    inline const std::map<optoken, std::string> kOptokenSymbols = {
+        {op_plus, "+"},
+        {op_minus, "-"},
+        {op_times, "*"},
+        {op_divide, "/"},
+        {op_floor_divide, "//"},
+        {op_exponentiation, "^"},
+        {op_modulo, "%"},
+        {op_and, "&"},
+        {op_xor, "~"},
+        {op_or, "|"},
+        {op_right, ">>"},
+        {op_left, "<<"},
+        {op_concat, ".."},
+        {op_less, "<"},
+        {op_less_eq, "<="},
+        {op_greater, ">"},
+        {op_greater_eq, ">="},
+        {op_equal, "=="},
+        {op_inequal, "~="},
+        {op_and_key, "and"},
+        {op_or_key, "or"},
+        {op_not, "not"},
+        {op_prefix, "#"}};
 
 }

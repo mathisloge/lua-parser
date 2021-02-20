@@ -2,34 +2,9 @@
 #include "ast.hpp"
 #include <map>
 #include <iostream>
+#include "ast_adapted.hpp"
 namespace sre::lua::ast
 {
-
-    inline const std::map<optoken, std::string> kOptokenSymbols = {
-        {op_plus, "+"},
-        {op_minus, "-"},
-        {op_times, "*"},
-        {op_divide, "/"},
-        {op_floor_divide, "//"},
-        {op_exponentiation, "^"},
-        {op_modulo, "%"},
-        {op_and, "&"},
-        {op_xor, "~"},
-        {op_or, "|"},
-        {op_right, ">>"},
-        {op_left, "<<"},
-        {op_concat, ".."},
-        {op_less, "<"},
-        {op_less_eq, "<="},
-        {op_greater, ">"},
-        {op_greater_eq, ">="},
-        {op_equal, "=="},
-        {op_inequal, "~="},
-        {op_and_key, "and"},
-        {op_or_key, "or"},
-        {op_not, "not"},
-        {op_prefix, "#"}};
-
     struct rexpr_printer
     {
         static constexpr int const tabsize = 2;
@@ -44,7 +19,8 @@ namespace sre::lua::ast
             tab(indent);
             std::cout << "exp chunk = " << std::endl;
             rexpr_printer{indent + tabsize}(ast.block_);
-            std::cout << '}' << std::endl;
+            std::cout << std::endl
+                      << '}' << std::endl;
         }
 
         void operator()(ast::block const &block) const
@@ -56,7 +32,8 @@ namespace sre::lua::ast
                 rexpr_printer{indent + tabsize}(stat);
             }
             tab(indent);
-            std::cout << "block retstat = " << std::endl;
+            if (block.retstat_.size() > 0)
+                std::cout << "block retstat = " << std::endl;
             for (auto const &retstat : block.retstat_)
             {
                 rexpr_printer(indent + tabsize)(retstat);
@@ -67,6 +44,7 @@ namespace sre::lua::ast
         {
             tab(indent);
             std::cout << "stat = " << std::endl;
+            boost::apply_visitor(rexpr_printer(indent + tabsize), stat);
         }
 
         void operator()(ast::exp const &exp) const
@@ -116,6 +94,53 @@ namespace sre::lua::ast
             std::cout << "expression " << std::endl;
             rexpr_printer{indent + tabsize}(expression.first_);
             rexpr_printer{indent + tabsize}(expression.rest_);
+        }
+
+        void operator()(const label &value) const
+        {
+            tab(indent);
+            std::cout << "label=" << value << std::endl;
+        }
+
+        void operator()(const Name &value) const
+        {
+            tab(indent);
+            std::cout << "name=" << value.name << std::endl;
+        }
+
+        void operator()(const funcname &value) const
+        {
+            tab(indent);
+            std::cout << "funcname=" << std::endl;
+            rexpr_printer{indent + tabsize}(value.name_);
+
+            for (const auto &name : value.chain_)
+            {
+                tab(indent);
+                std::cout << "chain=" << std::endl;
+                rexpr_printer{indent + tabsize}(name);
+            }
+
+            if (!value.self_chain_.name.empty())
+            {
+                tab(indent);
+                std::cout << "self_chain=" << std::endl;
+                rexpr_printer{indent + tabsize}(value.self_chain_);
+            }
+        }
+
+        void operator()(const function &value) const
+        {
+            tab(indent);
+            std::cout << "function=" << std::endl;
+            rexpr_printer{indent + tabsize}(value.funcname_);
+            tab(indent + tabsize);
+            std::cout << "params=" << std::endl;
+            for (const auto &arg : value.parameters_)
+            {
+                rexpr_printer{indent + 2 * tabsize}(arg);
+            }
+            rexpr_printer{indent + tabsize}(value.block_);
         }
 
         void operator()(const nil &nil) const
