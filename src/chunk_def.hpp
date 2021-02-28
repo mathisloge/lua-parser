@@ -1,7 +1,8 @@
 #pragma once
-#include <iostream>
-#include <iomanip>
 #include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/traits/transform_attribute.hpp>
+#include <iomanip>
+#include <iostream>
 
 #include "ast/ast.hpp"
 #include "ast/ast_adapted.hpp"
@@ -48,6 +49,8 @@ namespace sre::lua::parser
         struct label_expr_class : ehbase{};
         struct funcname_expr_class : ehbase{};
         struct function_expr_class : ehbase{};
+        struct local_function_expr_class : ehbase{};
+        struct functiondef_expr_class : ehbase{};
         struct namelist_expr_class : ehbase{};
         struct parlist_expr_class : ehbase{};
         struct binary_expr_class : ehbase{};
@@ -55,6 +58,9 @@ namespace sre::lua::parser
         struct retstat_expr_class : ehbase{};
         struct stat_expr_class : ehbase{};
         struct block_expr_class : ehbase{};
+        struct field_expr_class : ehbase{};
+        struct tableconstructor_expr_class : ehbase{};
+        struct for_namelist_expr_class : ehbase {};
         // clang-format on
 
         inline const x3::rule<literal_str_expr_class, std::string> literal_str_expr{"literal_str_expr"};
@@ -66,6 +72,13 @@ namespace sre::lua::parser
 
         inline const x3::rule<funcname_expr_class, ast::funcname> funcname_expr{"funcname_expr"};
         inline const x3::rule<function_expr_class, ast::function> function_expr{"function_expr"};
+        inline const x3::rule<local_function_expr_class, ast::local_function> local_function_expr{"local_function_expr"};
+        inline const x3::rule<functiondef_expr_class, ast::functiondef> functiondef_expr{"functiondef_expr"};
+
+        inline const x3::rule<for_namelist_expr_class, ast::for_namelist> for_namelist_expr{"for_namelist_expr"};
+
+        inline const x3::rule<field_expr_class, ast::field> field_expr{"field_expr"};
+        inline const x3::rule<tableconstructor_expr_class, ast::tableconstructor> tableconstructor_expr{"tableconstructor_expr"};
 
         inline const x3::rule<namelist_expr_class, ast::namelist> namelist_expr{"namelist_expr"};
         inline const x3::rule<parlist_expr_class, ast::namelist> parlist_expr{"parlist_expr"};
@@ -105,26 +118,45 @@ namespace sre::lua::parser
         inline const auto funcbody = lit('(') > -parlist_expr > lit(')') >> block_expr >> lit("end");
         //! function funcname funcbody
         inline const auto function_expr_def = lit("function") > funcname_expr > funcbody;
+        //! local function Name funcbody
+        inline const auto local_function_expr_def = lit("local") > lit("function") > name_expr > funcbody;
+        //! functiondef ::= function funcbody
+        inline const auto functiondef_expr_def = lit("function") > funcbody;
 
         //! explist ::= exp {‘,’ exp}
-        inline const auto explist_expr = exp_expr >> *(lit(',') > exp_expr);
+        inline const auto explist_expr = as<ast::explist>(exp_expr >> *(lit(',') > exp_expr));
 
         //! retstat ::= return [explist] [‘;’]
         inline const auto retstat_expr_def = lit("return") > -explist_expr > -lit(';');
         //! attrib ::= [‘<’ Name ‘>’]
         inline const auto attrib_expr = -(lit('<') > literal_str_expr > lit('>'));
 
+        //! field defs:
+        //! field ::= ‘[’ exp ‘]’ ‘=’ exp | Name ‘=’ exp | exp
+        inline const auto field_expr_def = (lit('[') > exp_expr > lit(']') > lit('=') > exp_expr) |
+                                           (name_expr > lit('=') > exp_expr) |
+                                           exp_expr;
+        //! fieldsep ::= ‘,’ | ‘;’
+        inline const auto fieldsep_expr = lit(',') | lit(';');
+        //! fieldlist ::= field {fieldsep field} [fieldsep]
+        inline const auto fieldlist_expr = field_expr > *as<ast::field>(fieldsep_expr > field_expr) > -fieldsep_expr;
+        //! tableconstructor ::= ‘{’ [fieldlist] ‘}’
+        inline const auto tableconstructor_expr_def = lit('{') > -fieldlist_expr > lit('}');
+
+        //! for namelist in explist do block end
+        inline const auto for_namelist_expr_def = lit("for") > namelist_expr > lit("in") > explist_expr > lit("do") > block_expr > lit("end");
+
         //! nil | false | true | Numeral | LiteralString | ‘...’ | functiondef | prefixexp | tableconstructor | exp binop exp | unop exp
         //! exp binop exp is left recursive so we need to transform it.
         //! exp = (exp^binary_expr) exp'
         //! exp' = binop exp exp' | empty
         inline const auto exp_sec_expr_def = -(binary_expr);
-        inline const auto exp_expr_def = (bool_ | double_ | literal_str_expr | unary_expr) > exp_sec_expr;
+        inline const auto exp_expr_def = (bool_ | double_ | literal_str_expr | unary_expr | functiondef_expr | tableconstructor_expr) > exp_sec_expr;
 
         inline const auto binary_expr_def = (binary_op > exp_expr);
         inline const auto unary_expr_def = (unary_op > exp_expr);
 
-        inline const auto stat_expr_def = lit(';') | label_expr | function_expr;
+        inline const auto stat_expr_def = lit(';') | label_expr | for_namelist_expr | function_expr | local_function_expr;
 
         //! {stat} [retstat]
         inline const auto block_expr_def = *(stat_expr) > -retstat_expr;
@@ -140,6 +172,11 @@ namespace sre::lua::parser
             parlist_expr,
             funcname_expr,
             function_expr,
+            local_function_expr,
+            functiondef_expr,
+            for_namelist_expr,
+            field_expr,
+            tableconstructor_expr,
             retstat_expr,
             exp_expr,
             exp_sec_expr,

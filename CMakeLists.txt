@@ -11,8 +11,6 @@ find_package(Boost REQUIRED COMPONENTS graph)
 add_executable(LuaParser 
     src/main.cpp
     src/chunk_def.cpp
-    #src/grammar/chunk.cpp
-    #src/grammar/chunk_def.cpp
     src/chunk.cpp
 )
 

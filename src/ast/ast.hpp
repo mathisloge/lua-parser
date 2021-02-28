@@ -1,12 +1,12 @@
 #pragma once
-#include <string>
+#include <boost/fusion/include/io.hpp>
+#include <boost/optional.hpp>
+#include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
+#include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <list>
 #include <map>
-#include <boost/spirit/home/x3/support/ast/variant.hpp>
-#include <boost/optional.hpp>
-#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
-#include <boost/spirit/home/x3.hpp>
-#include <boost/fusion/include/io.hpp>
+#include <string>
 
 namespace sre::lua::ast
 {
@@ -26,9 +26,11 @@ namespace sre::lua::ast
     struct binary;
     struct unary;
     struct function;
-    //struct functiondef;
+    struct local_function;
+    struct functiondef;
+    struct for_namelist;
     //struct prefixexp;
-    //struct tableconstructor;
+    struct tableconstructor;
 
     struct Name : x3::position_tagged
     {
@@ -42,15 +44,28 @@ namespace sre::lua::ast
                      double,
                      std::string,
                      // ...?
-                     //x3::forward_ast<functiondef>,
+                     x3::forward_ast<functiondef>,
                      //x3::forward_ast<prefixexp>,
-                     //x3::forward_ast<tableconstructor>,
+                     x3::forward_ast<tableconstructor>,
                      x3::forward_ast<binary>,
                      x3::forward_ast<unary>,
                      x3::forward_ast<expression>>
     {
         using base_type::base_type;
         using base_type::operator=;
+    };
+
+    struct field
+    {
+        exp first;
+        exp second;
+    };
+    using fieldlist = std::list<field>;
+
+    struct tableconstructor
+    {
+        field first_;
+        std::list<field> fields_;
     };
 
     enum optoken
@@ -123,8 +138,9 @@ namespace sre::lua::ast
     struct stat : x3::variant<
                       nil,
                       label,
-                      boost::recursive_wrapper<function> //! needed since function depends on block and block on statement and statement on function...
-                      >
+                      boost::recursive_wrapper<function>, //! needed since function depends on block and block on statement and statement on function...
+                      boost::recursive_wrapper<local_function>,
+                      boost::recursive_wrapper<for_namelist>>
     {
         using base_type::base_type;
         using base_type::operator=;
@@ -147,6 +163,26 @@ namespace sre::lua::ast
     struct function
     {
         funcname funcname_;
+        parlist parameters_;
+        block block_;
+    };
+
+    struct local_function
+    {
+        Name funcname_;
+        parlist parameters_;
+        block block_;
+    };
+
+    struct for_namelist
+    {
+        namelist name_list_;
+        explist exp_list_;
+        block block_;
+    };
+
+    struct functiondef
+    {
         parlist parameters_;
         block block_;
     };

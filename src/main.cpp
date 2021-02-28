@@ -1,9 +1,9 @@
 #include "ast/ast.hpp"
 #include "ast/ast_adapted.hpp"
+#include "ast/printer.hpp"
 #include "chunk.hpp"
 #include <iostream>
-#include "ast/printer.hpp"
-#include "ast/dot_printer.hpp"
+//#include "ast/dot_printer.hpp"
 #include "chunk_def.hpp"
 
 int main()
@@ -12,16 +12,25 @@ int main()
     const std::string str = R"(
         -- defines a factorial function
         ::test1::
+        { 1+1 }
         function test2(in_test1, in_test3)
+            local function test6(intest3)
+            end
             function test3()
                 ::test4::
             end
         return;
         end
     )";
-
-    auto in = str.begin();
-    auto end = str.end();
+    const std::string str2 = R"(
+        for Test, Abc, Test3 in 1+1*1, 2+2 do
+            function test3()
+                ::test4::
+            end
+        end
+    )";
+    auto in = str2.begin();
+    auto end = str2.end();
 
     const bool ret = boost::spirit::x3::phrase_parse(in, end, sre::lua::parser::chunk(), sre::lua::parser::impl::input_skipper, chunk_out);
 

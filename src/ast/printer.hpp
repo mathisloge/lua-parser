@@ -1,8 +1,8 @@
 #pragma once
 #include "ast.hpp"
-#include <map>
-#include <iostream>
 #include "ast_adapted.hpp"
+#include <iostream>
+#include <map>
 namespace sre::lua::ast
 {
     struct rexpr_printer
@@ -139,6 +139,72 @@ namespace sre::lua::ast
             for (const auto &arg : value.parameters_)
             {
                 rexpr_printer{indent + 2 * tabsize}(arg);
+            }
+            rexpr_printer{indent + tabsize}(value.block_);
+        }
+
+        void operator()(const local_function &value) const
+        {
+            tab(indent);
+            std::cout << "local_function=" << std::endl;
+            rexpr_printer{indent + tabsize}(value.funcname_);
+            tab(indent + tabsize);
+            std::cout << "params=" << std::endl;
+            for (const auto &arg : value.parameters_)
+            {
+                rexpr_printer{indent + 2 * tabsize}(arg);
+            }
+            rexpr_printer{indent + tabsize}(value.block_);
+        }
+
+        void operator()(const functiondef &value) const
+        {
+            tab(indent);
+            std::cout << "functiondef=" << std::endl;
+            tab(indent + tabsize);
+            std::cout << "params=" << std::endl;
+            for (const auto &arg : value.parameters_)
+            {
+                rexpr_printer{indent + 2 * tabsize}(arg);
+            }
+            rexpr_printer{indent + tabsize}(value.block_);
+        }
+
+        void operator()(const field &value) const
+        {
+            tab(indent);
+            rexpr_printer{indent + tabsize}(value.first);
+            rexpr_printer{indent + tabsize}(value.second);
+        }
+
+        void operator()(const fieldlist &value) const
+        {
+            tab(indent);
+            for (const auto &f : value)
+            {
+                rexpr_printer{indent + tabsize}(f);
+            }
+        }
+
+        void operator()(const tableconstructor &value) const
+        {
+            tab(indent);
+            std::cout << "tableconstructor = " << std::endl;
+            rexpr_printer{indent + tabsize}(value.first_);
+            rexpr_printer{indent + tabsize}(value.fields_);
+        }
+
+        void operator()(const for_namelist &value) const
+        {
+            tab(indent);
+            std::cout << "for_namelist = " << std::endl;
+            for (const auto &name : value.name_list_)
+            {
+                rexpr_printer{indent + tabsize}(name);
+            }
+            for (const auto &expr : value.exp_list_)
+            {
+                rexpr_printer{indent + tabsize}(expr);
             }
             rexpr_printer{indent + tabsize}(value.block_);
         }
