@@ -23,11 +23,10 @@ int main()
         end
     )";
     const std::string str2 = R"(
-        for Test, Abc, Test3 in 1+1*1, 2+2 do
-            function test3()
-                ::test4::
-            end
-        end
+            -- defines a factorial function
+    function fact (n)
+      return n * fact(n+1+3) + 5
+    end
     )";
     auto in = str2.begin();
     auto end = str2.end();

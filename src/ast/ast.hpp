@@ -29,9 +29,13 @@ namespace sre::lua::ast
     struct local_function;
     struct functiondef;
     struct for_namelist;
-    //struct prefixexp;
+    struct prefixexp;
     struct tableconstructor;
-
+    struct var;
+    struct functioncall;
+    struct stat_functioncall;
+    struct prefixexpression;
+    using explist = std::list<expression>;
     struct Name : x3::position_tagged
     {
         Name(std::string const &name = "") : name(name) {}
@@ -45,11 +49,26 @@ namespace sre::lua::ast
                      std::string,
                      // ...?
                      x3::forward_ast<functiondef>,
-                     //x3::forward_ast<prefixexp>,
                      x3::forward_ast<tableconstructor>,
                      x3::forward_ast<binary>,
                      x3::forward_ast<unary>,
-                     x3::forward_ast<expression>>
+                     x3::forward_ast<expression>,
+                     x3::forward_ast<var>, x3::forward_ast<functioncall>,
+                     x3::forward_ast<prefixexpression>>
+    {
+        using base_type::base_type;
+        using base_type::operator=;
+    };
+
+    struct prefixexp : x3::variant<x3::forward_ast<exp>, x3::forward_ast<var>, x3::forward_ast<functioncall>>
+    {
+        using base_type::base_type;
+        using base_type::operator=;
+    };
+
+    struct args : x3::variant<std::string,
+                              x3::forward_ast<tableconstructor>,
+                              x3::forward_ast<explist>>
     {
         using base_type::base_type;
         using base_type::operator=;
@@ -113,14 +132,25 @@ namespace sre::lua::ast
         exp rest_;
     };
 
+    struct prefixexpression : x3::position_tagged
+    {
+        exp first_;
+        prefixexp rest_;
+    };
+
     struct label : Name
     {
         using Name::Name;
     };
 
-    struct var : Name
+    struct var
     {
-        using Name::Name;
+        Name name_;
+    };
+    struct varlist
+    {
+        var first_;
+        std::list<var> rest_;
     };
 
     struct funcname
@@ -130,23 +160,18 @@ namespace sre::lua::ast
         Name self_chain_;
     };
 
-    struct varlist
-    {
-        std::list<var> vars_;
-    };
-
     struct stat : x3::variant<
                       nil,
                       label,
-                      boost::recursive_wrapper<function>, //! needed since function depends on block and block on statement and statement on function...
-                      boost::recursive_wrapper<local_function>,
-                      boost::recursive_wrapper<for_namelist>>
+                      x3::forward_ast<stat_functioncall>,
+                      x3::forward_ast<function>,
+                      x3::forward_ast<local_function>,
+                      x3::forward_ast<for_namelist>>
     {
         using base_type::base_type;
         using base_type::operator=;
     };
 
-    using explist = std::list<expression>;
     using retstat = explist;
 
     struct block : x3::position_tagged
@@ -185,6 +210,18 @@ namespace sre::lua::ast
     {
         parlist parameters_;
         block block_;
+    };
+
+    struct functioncall
+    {
+        boost::optional<Name> name_;
+        args args_;
+    };
+
+    struct stat_functioncall
+    {
+        prefixexpression prefix_;
+        functioncall call_;
     };
 
     using boost::fusion::operator<<;

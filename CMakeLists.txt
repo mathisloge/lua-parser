@@ -14,6 +14,10 @@ add_executable(LuaParser
     src/chunk.cpp
 )
 
+if(MSVC)
+    set_property(TARGET LuaParser APPEND PROPERTY COMPILE_OPTIONS "/bigobj")
+endif()
+
 set_property(TARGET LuaParser PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(LuaParser PRIVATE

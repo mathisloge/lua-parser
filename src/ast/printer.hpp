@@ -202,11 +202,51 @@ namespace sre::lua::ast
             {
                 rexpr_printer{indent + tabsize}(name);
             }
-            for (const auto &expr : value.exp_list_)
+            rexpr_printer{indent + tabsize}(value.exp_list_);
+            rexpr_printer{indent + tabsize}(value.block_);
+        }
+
+        void operator()(const prefixexp &value) const
+        {
+            tab(indent);
+            std::cout << "prefixexp =" << std::endl;
+            boost::apply_visitor(rexpr_printer(indent + tabsize), value);
+        }
+
+        void operator()(const functioncall &value) const
+        {
+            tab(indent);
+            std::cout << "functioncall=" << std::endl;
+            boost::apply_visitor(rexpr_printer(indent + tabsize), value.args_);
+        }
+        void operator()(const stat_functioncall &value) const
+        {
+            tab(indent);
+            std::cout << "stat_functioncall=" << std::endl;
+        }
+
+        void operator()(const explist &value) const
+        {
+            tab(indent);
+            std::cout << "explist=" << std::endl;
+            for (const auto &expr : value)
             {
                 rexpr_printer{indent + tabsize}(expr);
             }
-            rexpr_printer{indent + tabsize}(value.block_);
+        }
+
+        void operator()(const var &value) const
+        {
+            tab(indent);
+            std::cout << "TODO: var" << std::endl;
+        }
+
+        void operator()(const prefixexpression &value) const
+        {
+            tab(indent);
+            std::cout << "prefixexpression=" << std::endl;
+            rexpr_printer{indent + tabsize}(value.first_);
+            rexpr_printer{indent + tabsize}(value.rest_);
         }
 
         void operator()(const nil &nil) const
