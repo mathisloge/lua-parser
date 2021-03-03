@@ -217,14 +217,11 @@ namespace sre::lua::ast
         {
             tab(indent);
             std::cout << "functioncall=" << std::endl;
+            if (value.name_.has_value())
+                rexpr_printer{indent + tabsize}(value.name_.value());
             boost::apply_visitor(rexpr_printer(indent + tabsize), value.args_);
+            boost::apply_visitor(rexpr_printer(indent + tabsize), value.prefix_exp_);
         }
-        void operator()(const stat_functioncall &value) const
-        {
-            tab(indent);
-            std::cout << "stat_functioncall=" << std::endl;
-        }
-
         void operator()(const explist &value) const
         {
             tab(indent);
@@ -241,12 +238,25 @@ namespace sre::lua::ast
             std::cout << "TODO: var" << std::endl;
         }
 
-        void operator()(const prefixexpression &value) const
+        void operator()(const varlist &value) const
         {
             tab(indent);
-            std::cout << "prefixexpression=" << std::endl;
+            std::cout << "TODO: varlist" << std::endl;
+        }
+
+        void operator()(const primaryexpression &value) const
+        {
+            tab(indent);
+            std::cout << "primaryexpression=" << std::endl;
             rexpr_printer{indent + tabsize}(value.first_);
-            rexpr_printer{indent + tabsize}(value.rest_);
+            boost::apply_visitor(rexpr_printer(indent + tabsize), value.rest_);
+        }
+        void operator()(const assign_or_call &value) const
+        {
+            tab(indent);
+            std::cout << "assign_or_call=" << std::endl;
+            rexpr_printer{indent + tabsize}(value.primaryexp_);
+            boost::apply_visitor(rexpr_printer(indent + tabsize), value.var_action_);
         }
 
         void operator()(const nil &nil) const

@@ -93,6 +93,7 @@ namespace sre::lua::parser
         inline const x3::rule<tableconstructor_expr_class, ast::tableconstructor> tableconstructor_expr{"tableconstructor_expr"};
 
         inline const x3::rule<var_expr_class, ast::var> var_expr{"var_expr"};
+        inline const x3::rule<struct assignment_or_call_expr_class, ast::assign_or_call> assignment_or_call_expr{"assignment_or_call_expr"};
         inline const x3::rule<varlist_expr_class, ast::varlist> varlist_expr{"varlist_expr"};
 
         inline const x3::rule<namelist_expr_class, ast::namelist> namelist_expr{"namelist_expr"};
@@ -101,7 +102,9 @@ namespace sre::lua::parser
         inline const x3::rule<exp_expr_class, ast::expression> exp_expr{"exp_expr"};
         inline const x3::rule<exp_sec_expr_class, ast::exp> exp_sec_expr{"exp_sec_expr"};
 
-        inline const x3::rule<prefixexp_expr_class, ast::prefixexpression> prefixexp_expr{"prefixexp_expr"};
+        inline const x3::rule<struct var_assign_expr_class, ast::explist> var_assign_expr{"var_assign_expr"};
+        inline const x3::rule<struct primaryexp_expr_class, ast::primaryexpression> primaryexp_expr{"primaryexp_expr"};
+        inline const x3::rule<prefixexp_expr_class, ast::exp> prefixexp_expr{"prefixexp_expr"};
         inline const x3::rule<prefixexp_sec_expr_class, ast::prefixexp> prefixexp_sec_expr{"prefixexp_sec_expr"};
 
         inline const x3::rule<binary_expr_class, ast::binary> binary_expr{"binary_expr"};
@@ -158,16 +161,22 @@ namespace sre::lua::parser
         //! P = (Name | ‘(’ exp ‘)’) P'
         //!            V              V          F             F
         //! P'= ‘[’ exp ‘]’ P' | ‘.’ Name P' | args P' | ‘:’ Name args P'| e
-        inline const auto prefixexp_sec_expr_def = -(var_expr | functioncall_expr);
+        inline const auto prefixexp_sec_expr_def = -(functioncall_expr | var_expr);
         //! prefixexp ::= var | functioncall | ‘(’ exp ‘)’
-        inline const auto prefixexp_expr_def = (name_expr | as<ast::exp>(lit('(') > exp_expr > lit(')'))) > prefixexp_sec_expr;
+        inline const auto prefixexp_expr_def = (as<ast::exp>(name_expr) | as<ast::exp>(lit('(') > exp_expr > lit(')')));
+
+        inline const auto primaryexp_expr_def = prefixexp_expr > prefixexp_sec_expr;
+
         //! functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
-        inline const auto functioncall_expr_def = -(lit(':') > name_expr) > args_expr;
+        inline const auto functioncall_expr_def = -(lit(':') > name_expr) > args_expr > prefixexp_sec_expr;
 
         //! var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name
-        inline const auto var_expr_def = name_expr /*| lit('[') > exp_expr > lit(']') >  | lit('.') > name_expr*/;
+        inline const auto var_expr_def = (name_expr | as<ast::exp>(lit('[') > exp_expr > lit(']')) | as<ast::Name>(lit('.') > name_expr));
+        inline const auto var_assign_expr_def = lit('=') > explist_expr;
         //! varlist ::= var {‘,’ var}
         inline const auto varlist_expr_def = var_expr > *(lit(',') > var_expr);
+        //! empty = call, ',' = var assign list, '=' single assign
+        inline const auto assignment_or_call_expr_def = primaryexp_expr > -(var_assign_expr | varlist_expr);
 
         //! retstat ::= return [explist] [‘;’]
         inline const auto retstat_expr_def = lit("return") > -explist_expr > -lit(';');
@@ -194,12 +203,12 @@ namespace sre::lua::parser
         //! exp = (exp^binary_expr) exp'
         //! exp' = binop exp exp' | empty
         inline const auto exp_sec_expr_def = -(binary_expr);
-        inline const auto exp_expr_def = (bool_ | double_ | functiondef_expr | prefixexp_expr | tableconstructor_expr | unary_expr | literal_str_expr) > exp_sec_expr;
+        inline const auto exp_expr_def = (bool_ | double_ | functiondef_expr | primaryexp_expr | tableconstructor_expr | unary_expr | literal_str_expr) > exp_sec_expr;
 
         inline const auto binary_expr_def = (binary_op > exp_expr);
         inline const auto unary_expr_def = (unary_op > exp_expr);
 
-        inline const auto stat_expr_def = lit(';') | label_expr | as<ast::stat_functioncall>(prefixexp_expr>functioncall_expr) | for_namelist_expr | function_expr | local_function_expr;
+        inline const auto stat_expr_def = lit(';') | assignment_or_call_expr | label_expr | for_namelist_expr | function_expr | local_function_expr;
 
         //! {stat} [retstat]
         inline const auto block_expr_def = *(stat_expr) > -retstat_expr;
@@ -214,10 +223,13 @@ namespace sre::lua::parser
             namelist_expr,
             parlist_expr,
             args_expr,
+            primaryexp_expr,
             prefixexp_expr,
             prefixexp_sec_expr,
             functioncall_expr,
             var_expr,
+            var_assign_expr,
+            assignment_or_call_expr,
             varlist_expr,
             funcname_expr,
             function_expr,

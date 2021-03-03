@@ -34,7 +34,9 @@ namespace sre::lua::ast
     struct var;
     struct functioncall;
     struct stat_functioncall;
-    struct prefixexpression;
+    struct primaryexpression;
+    struct prefixexp_container;
+    struct varlist;
     using explist = std::list<expression>;
     struct Name : x3::position_tagged
     {
@@ -53,19 +55,37 @@ namespace sre::lua::ast
                      x3::forward_ast<binary>,
                      x3::forward_ast<unary>,
                      x3::forward_ast<expression>,
-                     x3::forward_ast<var>, x3::forward_ast<functioncall>,
-                     x3::forward_ast<prefixexpression>>
+                     x3::forward_ast<primaryexpression>>
     {
         using base_type::base_type;
         using base_type::operator=;
     };
 
-    struct prefixexp : x3::variant<x3::forward_ast<exp>, x3::forward_ast<var>, x3::forward_ast<functioncall>>
+    struct prefixexp : x3::variant<nil,
+                                   x3::forward_ast<functioncall>,
+                                   x3::forward_ast<var>>
     {
         using base_type::base_type;
         using base_type::operator=;
     };
 
+    struct primaryexpression
+    {
+        exp first_;
+        prefixexp rest_;
+    };
+
+    struct var_assign_or_list : x3::variant<nil,
+                                            x3::forward_ast<explist>, x3::forward_ast<varlist>>
+    {
+        using base_type::base_type;
+        using base_type::operator=;
+    };
+    struct assign_or_call
+    {
+        primaryexpression primaryexp_;
+        var_assign_or_list var_action_;
+    };
     struct args : x3::variant<std::string,
                               x3::forward_ast<tableconstructor>,
                               x3::forward_ast<explist>>
@@ -132,20 +152,15 @@ namespace sre::lua::ast
         exp rest_;
     };
 
-    struct prefixexpression : x3::position_tagged
-    {
-        exp first_;
-        prefixexp rest_;
-    };
-
     struct label : Name
     {
         using Name::Name;
     };
 
-    struct var
+    struct var : x3::variant<std::string, x3::forward_ast<exp>>
     {
-        Name name_;
+        using base_type::base_type;
+        using base_type::operator=;
     };
     struct varlist
     {
@@ -163,7 +178,7 @@ namespace sre::lua::ast
     struct stat : x3::variant<
                       nil,
                       label,
-                      x3::forward_ast<stat_functioncall>,
+                      x3::forward_ast<assign_or_call>,
                       x3::forward_ast<function>,
                       x3::forward_ast<local_function>,
                       x3::forward_ast<for_namelist>>
@@ -216,12 +231,7 @@ namespace sre::lua::ast
     {
         boost::optional<Name> name_;
         args args_;
-    };
-
-    struct stat_functioncall
-    {
-        prefixexpression prefix_;
-        functioncall call_;
+        prefixexp prefix_exp_;
     };
 
     using boost::fusion::operator<<;
