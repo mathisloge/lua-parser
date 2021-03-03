@@ -18,7 +18,7 @@ BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::functiondef, parameters_, block_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::for_namelist, name_list_, exp_list_, block_)
 
 
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::varlist, first_, rest_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::varlist, /*first_,*/ rest_, explist_)
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::field, first, second)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::tableconstructor, first_, fields_)

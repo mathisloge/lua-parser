@@ -164,8 +164,9 @@ namespace sre::lua::ast
     };
     struct varlist
     {
-        var first_;
+        //var first_;
         std::list<var> rest_;
+        explist explist_;
     };
 
     struct funcname

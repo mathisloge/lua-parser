@@ -5,7 +5,7 @@
 #include <iostream>
 //#include "ast/dot_printer.hpp"
 #include "chunk_def.hpp"
-//http://lua-users.org/lists/lua-l/2011-10/msg00440.html
+
 int main()
 {
     sre::lua::ast::chunk chunk_out;
@@ -28,6 +28,7 @@ int main()
       return n * fact(n+1+3)(10+10) + 5
     end
     fact(5+5)
+    test3 = 30
     test1, test2 = 10,20
     )";
     auto in = str2.begin();

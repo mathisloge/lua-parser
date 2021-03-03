@@ -235,13 +235,19 @@ namespace sre::lua::ast
         void operator()(const var &value) const
         {
             tab(indent);
-            std::cout << "TODO: var" << std::endl;
+            std::cout << "var =" << std::endl;
+            boost::apply_visitor(rexpr_printer(indent + tabsize), value);
         }
 
         void operator()(const varlist &value) const
         {
             tab(indent);
-            std::cout << "TODO: varlist" << std::endl;
+            std::cout << "varlist =" << std::endl;
+            for (auto &var : value.rest_)
+            {
+                rexpr_printer{indent + tabsize}(var);
+            }
+            rexpr_printer{indent + tabsize}(value.explist_);
         }
 
         void operator()(const primaryexpression &value) const

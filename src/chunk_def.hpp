@@ -170,11 +170,12 @@ namespace sre::lua::parser
         //! functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
         inline const auto functioncall_expr_def = -(lit(':') > name_expr) > args_expr > prefixexp_sec_expr;
 
-        //! var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name
-        inline const auto var_expr_def = (name_expr | as<ast::exp>(lit('[') > exp_expr > lit(']')) | as<ast::Name>(lit('.') > name_expr));
+        //! var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name 
+        //! Name is directly in var list since the function call depends also on var. but function()Name is not possible
+        inline const auto var_expr_def = (as<ast::exp>(lit('[') > exp_expr > lit(']')) | as<ast::Name>(lit('.') > name_expr));
         inline const auto var_assign_expr_def = lit('=') > explist_expr;
         //! varlist ::= var {‘,’ var}
-        inline const auto varlist_expr_def = var_expr > *(lit(',') > var_expr);
+        inline const auto varlist_expr_def = *(lit(',') > (name_expr | var_expr)) > var_assign_expr;
         //! empty = call, ',' = var assign list, '=' single assign
         inline const auto assignment_or_call_expr_def = primaryexp_expr > -(var_assign_expr | varlist_expr);
 
