@@ -32,11 +32,13 @@ namespace sre::lua::ast
     struct prefixexp;
     struct tableconstructor;
     struct var;
+    struct var_wrapper;
     struct functioncall;
     struct stat_functioncall;
     struct primaryexpression;
     struct prefixexp_container;
     struct varlist;
+    struct ifelse;
     using explist = std::list<expression>;
     struct Name : x3::position_tagged
     {
@@ -63,7 +65,7 @@ namespace sre::lua::ast
 
     struct prefixexp : x3::variant<nil,
                                    x3::forward_ast<functioncall>,
-                                   x3::forward_ast<var>>
+                                   x3::forward_ast<var_wrapper>>
     {
         using base_type::base_type;
         using base_type::operator=;
@@ -157,10 +159,16 @@ namespace sre::lua::ast
         using Name::Name;
     };
 
-    struct var : x3::variant<std::string, x3::forward_ast<exp>>
+    struct var : x3::variant<Name, x3::forward_ast<exp>>
     {
         using base_type::base_type;
         using base_type::operator=;
+    };
+
+    struct var_wrapper
+    {
+        var var_;
+        prefixexp next_;
     };
     struct varlist
     {
@@ -176,13 +184,34 @@ namespace sre::lua::ast
         Name self_chain_;
     };
 
+    struct name_attrib_pair {
+        Name name_;
+        boost::optional<Name> attrib_;
+    };
+    struct attnamelist
+    {
+        name_attrib_pair first_;
+        std::list<name_attrib_pair> rest_;
+    };
+
+    struct whiledo;
+    struct repeatuntil;
+    struct doblock;
+    struct forexp;
+    struct local_attnamelist_assign;
     struct stat : x3::variant<
                       nil,
                       label,
                       x3::forward_ast<assign_or_call>,
                       x3::forward_ast<function>,
                       x3::forward_ast<local_function>,
-                      x3::forward_ast<for_namelist>>
+                      x3::forward_ast<for_namelist>,
+                      x3::forward_ast<repeatuntil>,
+                      x3::forward_ast<doblock>,
+                      x3::forward_ast<whiledo>,
+                      x3::forward_ast<ifelse>,
+                      x3::forward_ast<forexp>,
+                      x3::forward_ast<local_attnamelist_assign>>
     {
         using base_type::base_type;
         using base_type::operator=;
@@ -233,6 +262,51 @@ namespace sre::lua::ast
         boost::optional<Name> name_;
         args args_;
         prefixexp prefix_exp_;
+    };
+
+    struct ifelse_wrapper
+    {
+        exp exp_;
+        block block_;
+    };
+
+    struct ifelse
+    {
+        ifelse_wrapper first_;
+        std::list<ifelse_wrapper> rest_;
+        boost::optional<block> else_;
+    };
+
+    struct whiledo
+    {
+        exp exp_;
+        block block_;
+    };
+    struct repeatuntil
+    {
+
+        block block_;
+        exp exp_;
+    };
+
+    struct doblock
+    {
+        block block_;
+    };
+
+    struct forexp
+    {
+        Name name_;
+        exp exp_first_;
+        exp exp_second_;
+        exp exp_third_;
+        block block_;
+    };
+
+    struct local_attnamelist_assign
+    {
+        attnamelist attnamelist_;
+        explist explist_;
     };
 
     using boost::fusion::operator<<;

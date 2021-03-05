@@ -239,6 +239,14 @@ namespace sre::lua::ast
             boost::apply_visitor(rexpr_printer(indent + tabsize), value);
         }
 
+        void operator()(const var_wrapper &value) const
+        {
+            tab(indent);
+            std::cout << "var_wrapper =" << std::endl;
+            rexpr_printer{indent + tabsize}(value.var_);
+            rexpr_printer{indent + tabsize}(value.next_);
+        }
+
         void operator()(const varlist &value) const
         {
             tab(indent);
@@ -264,6 +272,41 @@ namespace sre::lua::ast
             rexpr_printer{indent + tabsize}(value.primaryexp_);
             boost::apply_visitor(rexpr_printer(indent + tabsize), value.var_action_);
         }
+
+        void operator()(const ifelse &value) const
+        {
+            tab(indent);
+            std::cout << "ifelse=" << std::endl;
+        }
+        void operator()(const whiledo &value) const
+        {
+            tab(indent);
+            std::cout << "whiledo=" << std::endl;
+        }
+        void operator()(const repeatuntil &value) const
+        {
+            tab(indent);
+            std::cout << "repeatuntil=" << std::endl;
+        }
+        void operator()(const doblock &value) const
+        {
+            tab(indent);
+            std::cout << "doblock=" << std::endl;
+        }
+
+        void operator()(const forexp &value) const
+        {
+            tab(indent);
+            std::cout << "forexp=" << std::endl;
+        }
+
+         void operator()(const local_attnamelist_assign &value) const
+        {
+            tab(indent);
+            std::cout << "local_attnamelist_assign=" << std::endl;
+        }
+
+        
 
         void operator()(const nil &nil) const
         {

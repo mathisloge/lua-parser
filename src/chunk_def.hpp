@@ -13,6 +13,7 @@ namespace sre::lua::parser
     {
         struct ehbase
         {
+#if 0
             template <typename It, typename Ctx>
             x3::error_handler_result on_error(It f, It l, x3::expectation_failure<It> const &e, Ctx const & /*ctx*/) const
             {
@@ -21,6 +22,7 @@ namespace sre::lua::parser
                           << "-- expected: " << e.which() << "\n";
                 return x3::error_handler_result::fail;
             }
+#endif
         };
 
         namespace x3 = boost::spirit::x3;
@@ -56,12 +58,8 @@ namespace sre::lua::parser
         struct parlist_expr_class : ehbase{};
         struct binary_expr_class : ehbase{};
         struct unary_expr_class : ehbase{};
-        struct retstat_expr_class : ehbase{};
-        struct stat_expr_class : ehbase{};
-        struct block_expr_class : ehbase{};
         struct field_expr_class : ehbase{};
         struct tableconstructor_expr_class : ehbase{};
-        struct for_namelist_expr_class : ehbase {};
 
         struct var_expr_class : ehbase{};
         struct varlist_expr_class : ehbase {};
@@ -78,6 +76,8 @@ namespace sre::lua::parser
         inline const x3::rule<name_expr_class, ast::Name> name_expr{"name_expr"};
         inline const x3::rule<label_expr_class, ast::label> label_expr{"label_expr"};
 
+        inline const x3::rule<struct ifelse_expr_class, ast::ifelse> ifelse_expr{"ifelse_expr"};
+
         inline const x3::rule<args_expr_class, ast::args> args_expr{"args_expr"};
 
         inline const x3::rule<functioncall_expr_class, ast::functioncall> functioncall_expr{"functioncall_expr"};
@@ -87,7 +87,7 @@ namespace sre::lua::parser
         inline const x3::rule<local_function_expr_class, ast::local_function> local_function_expr{"local_function_expr"};
         inline const x3::rule<functiondef_expr_class, ast::functiondef> functiondef_expr{"functiondef_expr"};
 
-        inline const x3::rule<for_namelist_expr_class, ast::for_namelist> for_namelist_expr{"for_namelist_expr"};
+        inline const x3::rule<struct for_namelist_expr_class, ast::for_namelist> for_namelist_expr{"for_namelist_expr"};
 
         inline const x3::rule<field_expr_class, ast::field> field_expr{"field_expr"};
         inline const x3::rule<tableconstructor_expr_class, ast::tableconstructor> tableconstructor_expr{"tableconstructor_expr"};
@@ -110,9 +110,16 @@ namespace sre::lua::parser
         inline const x3::rule<binary_expr_class, ast::binary> binary_expr{"binary_expr"};
         inline const x3::rule<unary_expr_class, ast::unary> unary_expr{"unary_expr"};
 
-        inline const x3::rule<retstat_expr_class, ast::explist> retstat_expr{"retstat_expr"};
-        inline const x3::rule<stat_expr_class, ast::stat> stat_expr{"stat_expr"};
-        inline const x3::rule<block_expr_class, ast::block> block_expr{"block_expr"};
+        inline const x3::rule<struct whiledo_class, ast::whiledo> whiledo_expr{"whiledo_expr"};
+        inline const x3::rule<struct repeatuntil_class, ast::repeatuntil> repeatuntil_expr{"repeatuntil_expr"};
+        inline const x3::rule<struct doblock_class, ast::doblock> doblock_expr{"doblock_expr"};
+        inline const x3::rule<struct forexp_class, ast::forexp> forexp_expr{"forexp_expr"};
+        inline const x3::rule<struct attnamelist_expr_class, ast::attnamelist> attnamelist_expr{"attnamelist_expr"};
+        inline const x3::rule<struct local_attnamelist_assign_class, ast::local_attnamelist_assign> local_attnamelist_assign_expr{"local_attnamelist_assign_expr"};
+
+        inline const x3::rule<struct retstat_expr_class, ast::explist> retstat_expr{"retstat_expr"};
+        inline const x3::rule<struct stat_expr_class, ast::stat> stat_expr{"stat_expr"};
+        inline const x3::rule<struct block_expr_class, ast::block> block_expr{"block_expr"};
         inline const chunk_type chunk_expr{"chunk_expr"};
 
         void initBinOp();
@@ -125,10 +132,15 @@ namespace sre::lua::parser
 
         inline const auto distinct_keyword = lexeme[keywords >> !(x3::alnum | '_')];
         // a literal string can't contain any keyword, so exclude it.
-        inline const auto literal_str_expr_def = raw[lexeme[(alpha | '_') >> *(alnum | '_')]] - distinct_keyword;
-        inline const auto name_expr_def = literal_str_expr;
+        inline const auto literal_str_expr_def = lexeme['"' >> +(char_ - '"') >> '"'];
+        inline const auto name_expr_def = raw[lexeme[(alpha | '_') >> *(alnum | '_')]] - distinct_keyword;
 
-        inline const auto label_expr_def = lit("::") > literal_str_expr > lit("::");
+        //! label ::= ‘::’ Name ‘::’
+        inline const auto label_expr_def = lit("::") > name_expr_def > lit("::");
+
+        //! if exp then block {elseif exp then block} [else block] end
+        inline const auto ifelse_body_expr = as<ast::ifelse_wrapper>(exp_expr > lit("then") > block_expr);
+        inline const auto ifelse_expr_def = lit("if") > ifelse_body_expr > *(lit("elseif") > ifelse_body_expr) > -(lit("else") > block_expr) > lit("end");
 
         //! funcname ::= Name {‘.’ Name} [‘:’ Name]
         inline const auto funcname_expr_def = name_expr > *(lit(".") > name_expr) > -(lit(':') > name_expr);
@@ -161,7 +173,7 @@ namespace sre::lua::parser
         //! P = (Name | ‘(’ exp ‘)’) P'
         //!            V              V          F             F
         //! P'= ‘[’ exp ‘]’ P' | ‘.’ Name P' | args P' | ‘:’ Name args P'| e
-        inline const auto prefixexp_sec_expr_def = -(functioncall_expr | var_expr);
+        inline const auto prefixexp_sec_expr_def = -(functioncall_expr | (var_expr > prefixexp_sec_expr));
         //! prefixexp ::= var | functioncall | ‘(’ exp ‘)’
         inline const auto prefixexp_expr_def = (as<ast::exp>(name_expr) | as<ast::exp>(lit('(') > exp_expr > lit(')')));
 
@@ -170,7 +182,7 @@ namespace sre::lua::parser
         //! functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
         inline const auto functioncall_expr_def = -(lit(':') > name_expr) > args_expr > prefixexp_sec_expr;
 
-        //! var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name 
+        //! var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name
         //! Name is directly in var list since the function call depends also on var. but function()Name is not possible
         inline const auto var_expr_def = (as<ast::exp>(lit('[') > exp_expr > lit(']')) | as<ast::Name>(lit('.') > name_expr));
         inline const auto var_assign_expr_def = lit('=') > explist_expr;
@@ -180,9 +192,8 @@ namespace sre::lua::parser
         inline const auto assignment_or_call_expr_def = primaryexp_expr > -(var_assign_expr | varlist_expr);
 
         //! retstat ::= return [explist] [‘;’]
+        //! local is needed here since a var could be declared as local myvar = nil; 
         inline const auto retstat_expr_def = lit("return") > -explist_expr > -lit(';');
-        //! attrib ::= [‘<’ Name ‘>’]
-        inline const auto attrib_expr = -(lit('<') > literal_str_expr > lit('>'));
 
         //! field defs:
         //! field ::= ‘[’ exp ‘]’ ‘=’ exp | Name ‘=’ exp | exp
@@ -209,7 +220,25 @@ namespace sre::lua::parser
         inline const auto binary_expr_def = (binary_op > exp_expr);
         inline const auto unary_expr_def = (unary_op > exp_expr);
 
-        inline const auto stat_expr_def = lit(';') | assignment_or_call_expr | label_expr | for_namelist_expr | function_expr | local_function_expr;
+        //! while exp do block end
+        inline const auto whiledo_expr_def = lit("while") > exp_expr > lit("do") > block_expr > lit("end");
+        //! repeat block until exp
+        inline const auto repeatuntil_expr_def = lit("repeat") > block_expr > lit("until") > exp_expr;
+        //! do block end
+        inline const auto doblock_expr_def = lit("do") > block_expr > lit("end");
+        inline const auto forexp_exp_expr = lit(',') > exp_expr;
+        //! for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end
+        inline const auto forexp_expr_def = lit("for") > name_expr > lit('=') > exp_expr > forexp_exp_expr > -forexp_exp_expr > lit("do") > block_expr > lit("end");
+
+
+        //! attrib ::= [‘<’ Name ‘>’]
+        inline const auto attrib_expr = as<ast::Name>(lit('<') > name_expr > lit('>'));
+        //! attnamelist ::=  Name attrib {‘,’ Name attrib}
+        inline const auto attname_pair_expr = as<ast::name_attrib_pair>(name_expr >> -attrib_expr);
+        inline const auto attnamelist_expr_def = attname_pair_expr > *(lit(',') > attname_pair_expr);
+        //inline const auto local_attnamelist_assign_expr_def = lit("local") > attnamelist_expr > -(lit('=') > explist_expr);
+
+        inline const auto stat_expr_def = lit(';') | assignment_or_call_expr | label_expr | doblock_expr | repeatuntil_expr | whiledo_expr | ifelse_expr | forexp_expr | for_namelist_expr | function_expr | local_function_expr;
 
         //! {stat} [retstat]
         inline const auto block_expr_def = *(stat_expr) > -retstat_expr;
@@ -221,6 +250,12 @@ namespace sre::lua::parser
             name_expr,
             literal_str_expr,
             label_expr,
+            whiledo_expr,
+            repeatuntil_expr,
+            doblock_expr,
+            forexp_expr,
+            ifelse_expr,
+            attnamelist_expr,
             namelist_expr,
             parlist_expr,
             args_expr,
