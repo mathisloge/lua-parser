@@ -219,7 +219,7 @@ inline const auto for_namelist_expr_def = lit("for") >> namelist_expr >> lit("in
 //! binop exp exp' | empty
 inline const auto exp_sec_expr_def = -(binary_expr);
 inline const auto exp_expr_def = (bool_ | numeral_expr | nil_expr | functiondef_expr | primaryexp_expr |
-                                  tableconstructor_expr | unary_expr | literal_str_expr) >>
+                                  tableconstructor_expr | unary_expr | literal_str_expr | lit("...")) >>
                                  exp_sec_expr;
 
 inline const auto binary_expr_def = (binary_op >> exp_expr);

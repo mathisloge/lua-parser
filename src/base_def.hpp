@@ -24,6 +24,7 @@ using x3::hex;
 using x3::int_;
 using x3::lexeme;
 using x3::lit;
+using x3::omit;
 using x3::raw;
 
 struct literal_str_expr_class;
@@ -43,8 +44,14 @@ inline const x3::rule<struct numeral_expr_class, ast::numeral> numeral_expr{"num
 inline const auto distinct_keyword = lexeme[keywords >> !(x3::alnum | '_')];
 inline const auto unchecked_name = lexeme[(x3::alpha | x3::char_('_')) >> *(x3::alnum | x3::char_('_'))];
 
+auto genDelimStr = [](char delim) {
+    return x3::lexeme[omit[delim] > *("\\" >> -char_(delim) | ~char_(delim)) > omit[delim]];
+};
+
 // a literal string can't contain any keyword, so exclude it.
-inline const auto literal_str_expr_def = lexeme['"' >> +(char_ - '"') >> '"'];
+// inline const auto literal_str_expr_def = lexeme['"' >> +(char_ - '"') >> '"'] | lexeme['\'' >> +(char_ - '\'') >>
+// '\''];
+inline const auto literal_str_expr_def = genDelimStr('"') | genDelimStr('\'');
 inline const auto name_expr_def = raw[unchecked_name - distinct_keyword];
 
 inline const auto nil_expr_def = keyword_nil;
