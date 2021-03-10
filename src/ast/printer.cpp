@@ -70,6 +70,11 @@ void rexpr_printer::operator()(double const &text) const
     std::cout << "double \"" << text << '"' << std::endl;
 }
 
+void rexpr_printer::operator()(unsigned const &text) const
+{
+    tab(indent);
+    std::cout << "unsigned \"" << text << '"' << std::endl;
+}
 void rexpr_printer::operator()(bool const &text) const
 {
     tab(indent);
@@ -346,6 +351,29 @@ void rexpr_printer::operator()(const nil &nil) const
 {
     tab(indent);
     std::cout << "nil " << std::endl;
+}
+
+void rexpr_printer::operator()(const break_stmt &value) const
+{
+    tab(indent);
+    std::cout << "break " << std::endl;
+}
+void rexpr_printer::operator()(const goto_stmt &value) const
+{
+    tab(indent);
+    std::cout << "goto=" << value.name_ << std::endl;
+}
+
+void rexpr_printer::operator()(const keyword_stmt &value) const
+{
+    tab(indent);
+    std::cout << "keyword=" << value.keyword_ << std::endl;
+}
+
+void rexpr_printer::operator()(const numeral &value) const
+{
+    tab(indent);
+    boost::apply_visitor(rexpr_printer(indent + tabsize), value);
 }
 
 void rexpr_printer::tab(int spaces) const

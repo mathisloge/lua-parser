@@ -17,6 +17,7 @@ struct rexpr_printer
     void operator()(ast::exp const &exp) const;
     void operator()(std::string const &text) const;
     void operator()(double const &text) const;
+    void operator()(unsigned const &text) const;
     void operator()(bool const &text) const;
     void operator()(const unary &unary) const;
     void operator()(const binary &bin) const;
@@ -49,6 +50,10 @@ struct rexpr_printer
     void operator()(const attnamelist &value) const;
     void operator()(const name_attrib_pair &value) const;
     void operator()(const ifelse_wrapper &value) const;
+    void operator()(const break_stmt &value) const;
+    void operator()(const goto_stmt &value) const;
+    void operator()(const keyword_stmt &value) const;
+    void operator()(const numeral &value) const;
 
     void operator()(const nil &nil) const;
     void tab(int spaces) const;

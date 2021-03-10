@@ -3,7 +3,10 @@
 #include "ast.hpp"
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::Name, name)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::goto_stmt, name_)
 
+
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::keyword_stmt, keyword_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::binary, /*lhs_,*/ operator_, rhs_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::unary, operator_, rhs_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::expression, first_, rest_)

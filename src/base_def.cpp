@@ -35,6 +35,9 @@ void initKeywords()
                 ("until")
                 ("while");
     // clang-format on
+
+    keyword_break.add("break", ast::keyword_break);
+    keyword_nil.add("nil", ast::keyword_nil);
 }
 
 void initUnaryOp()

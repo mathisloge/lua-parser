@@ -20,6 +20,7 @@ using x3::char_;
 using x3::double_;
 using x3::eoi;
 using x3::eol;
+using x3::hex;
 using x3::int_;
 using x3::lexeme;
 using x3::lit;
@@ -29,12 +30,15 @@ struct literal_str_expr_class;
 struct name_expr_class;
 
 inline x3::symbols<> keywords;
+inline x3::symbols<ast::keyword> keyword_break;
+inline x3::symbols<ast::keyword> keyword_nil;
 inline x3::symbols<ast::optoken> binary_op;
 inline x3::symbols<ast::optoken> unary_op;
 
 inline const x3::rule<literal_str_expr_class, std::string> literal_str_expr{"literal_str_expr"};
 inline const x3::rule<name_expr_class, ast::Name> name_expr{"name_expr"};
-// inline const x3::rule<struct nil_expr_class, ast::nil> nil_expr{"nil_expr"};
+inline const x3::rule<struct nil_expr_class, ast::keyword_stmt> nil_expr{"nil_expr"};
+inline const x3::rule<struct numeral_expr_class, ast::numeral> numeral_expr{"numeral_expr"};
 
 inline const auto distinct_keyword = lexeme[keywords >> !(x3::alnum | '_')];
 inline const auto unchecked_name = lexeme[(x3::alpha | x3::char_('_')) >> *(x3::alnum | x3::char_('_'))];
@@ -43,9 +47,11 @@ inline const auto unchecked_name = lexeme[(x3::alpha | x3::char_('_')) >> *(x3::
 inline const auto literal_str_expr_def = lexeme['"' >> +(char_ - '"') >> '"'];
 inline const auto name_expr_def = raw[unchecked_name - distinct_keyword];
 
-inline const auto nil_expr = lit("nil");
+inline const auto nil_expr_def = keyword_nil;
 
-BOOST_SPIRIT_DEFINE(name_expr, literal_str_expr /*, nil_expr*/)
+inline const auto numeral_expr_def = (lit("0x") >> hex) | double_;
+
+BOOST_SPIRIT_DEFINE(name_expr, literal_str_expr, nil_expr, numeral_expr)
 
 void initKeywords();
 void initBinOp();

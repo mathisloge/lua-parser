@@ -48,10 +48,28 @@ struct Name : x3::position_tagged
     std::string name;
 };
 
+enum keyword
+{
+    keyword_nil,
+    keyword_break
+};
+
+struct keyword_stmt
+{
+    keyword keyword_;
+};
+
+struct numeral : x3::variant<double, unsigned>
+{
+    using base_type::base_type;
+    using base_type::operator=;
+};
+
 struct exp :
     x3::variant<nil,
+                keyword_stmt, // nil
                 bool,
-                double,
+                numeral,
                 std::string,
                 // ...?
                 x3::forward_ast<functiondef>,
@@ -173,7 +191,8 @@ struct varlist
     std::list<var> rest_;
     explist explist_;
 };
-struct namelist {
+struct namelist
+{
     Name name_;
     std::list<Name> chain_;
 };
@@ -200,9 +219,17 @@ struct repeatuntil;
 struct doblock;
 struct forexp;
 struct local_attnamelist_assign;
+struct break_stmt
+{};
+struct goto_stmt
+{
+    Name name_;
+};
 struct stat :
     x3::variant<nil,
                 label,
+                keyword_stmt, //! break
+                goto_stmt,
                 x3::forward_ast<assign_or_call>,
                 x3::forward_ast<function>,
                 x3::forward_ast<local_function>,
