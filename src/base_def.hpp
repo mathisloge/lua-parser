@@ -44,8 +44,8 @@ inline const x3::rule<struct numeral_expr_class, ast::numeral> numeral_expr{"num
 inline const auto distinct_keyword = lexeme[keywords >> !(x3::alnum | '_')];
 inline const auto unchecked_name = lexeme[(x3::alpha | x3::char_('_')) >> *(x3::alnum | x3::char_('_'))];
 
-auto genDelimStr = [](char delim) {
-    return x3::lexeme[omit[delim] > *("\\" >> -char_(delim) | ~char_(delim)) > omit[delim]];
+constexpr auto genDelimStr = [](char delim) {
+    return x3::lexeme[omit[delim] > *(char_("\\\\") | '\\' >> -char_(delim) | (char_ - delim)) > omit[delim]];
 };
 
 // a literal string can't contain any keyword, so exclude it.
