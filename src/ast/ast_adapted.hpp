@@ -11,7 +11,8 @@ BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::primaryexpression, first_, rest_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::assign_or_call, primaryexp_, var_action_)
 
 
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::funcname, name_, chain_, self_chain_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::namelist, name_, chain_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::funcname, names_, self_chain_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::function, funcname_, parameters_, block_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::local_function, funcname_, parameters_, block_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::functiondef, parameters_, block_)
@@ -21,7 +22,7 @@ BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::var_wrapper, var_, next_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::varlist, rest_, explist_)
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::doblock, block_)
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::repeatuntil,  block_, exp_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::repeatuntil, block_, exp_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::whiledo, exp_, block_)
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::field, first, second)
@@ -30,7 +31,7 @@ BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::tableconstructor, first_, fields_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::block, stat_, retstat_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::chunk, block_)
 
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::label, name)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::label, name_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::name_attrib_pair, name_, attrib_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::attnamelist, first_, rest_)
 
