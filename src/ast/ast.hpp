@@ -75,6 +75,7 @@ struct Name
 enum keyword
 {
     keyword_nil,
+    keyword_expand, //! ...
     keyword_break
 };
 
@@ -91,11 +92,10 @@ struct numeral : x3::variant<double, unsigned>
 
 struct exp :
     x3::variant<nil,
-                keyword_stmt, // nil
+                keyword_stmt, // nil | ...
                 bool,
                 numeral,
                 std::string,
-                // ...?
                 x3::forward_ast<functiondef>,
                 x3::forward_ast<tableconstructor>,
                 x3::forward_ast<binary>,
@@ -252,18 +252,22 @@ struct chunk : x3::position_tagged
 };
 
 using parlist = namelist;
+struct funcbody
+{
+    parlist parameters_;
+    block block_;
+};
+
 struct function
 {
     funcname funcname_;
-    parlist parameters_;
-    block block_;
+    funcbody funcbody_;
 };
 
 struct local_function
 {
     Name funcname_;
-    parlist parameters_;
-    block block_;
+    funcbody funcbody_;
 };
 
 struct for_namelist
@@ -275,8 +279,7 @@ struct for_namelist
 
 struct functiondef
 {
-    parlist parameters_;
-    block block_;
+    funcbody funcbody_;
 };
 
 struct functioncall

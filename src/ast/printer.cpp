@@ -129,16 +129,20 @@ void rexpr_printer::operator()(const funcname &value) const
         rexpr_printer{indent + tabsize}(value.self_chain_);
     }
 }
-
+void rexpr_printer::operator()(const funcbody &value) const
+{
+    tab(indent);
+    std::cout << "params=" << std::endl;
+    rexpr_printer{indent + 2 * tabsize}(value.parameters_);
+    std::cout << "block=" << std::endl;
+    rexpr_printer{indent + tabsize}(value.block_);
+}
 void rexpr_printer::operator()(const function &value) const
 {
     tab(indent);
     std::cout << "function=" << std::endl;
     rexpr_printer{indent + tabsize}(value.funcname_);
-    tab(indent + tabsize);
-    std::cout << "params=" << std::endl;
-    rexpr_printer{indent + 2 * tabsize}(value.parameters_);
-    rexpr_printer{indent + tabsize}(value.block_);
+    rexpr_printer{indent + tabsize}(value.funcbody_);
 }
 
 void rexpr_printer::operator()(const local_function &value) const
@@ -146,20 +150,14 @@ void rexpr_printer::operator()(const local_function &value) const
     tab(indent);
     std::cout << "local_function=" << std::endl;
     rexpr_printer{indent + tabsize}(value.funcname_);
-    tab(indent + tabsize);
-    std::cout << "params=" << std::endl;
-    rexpr_printer{indent + 2 * tabsize}(value.parameters_);
-    rexpr_printer{indent + tabsize}(value.block_);
+    rexpr_printer{indent + tabsize}(value.funcbody_);
 }
 
 void rexpr_printer::operator()(const functiondef &value) const
 {
     tab(indent);
     std::cout << "functiondef=" << std::endl;
-    tab(indent + tabsize);
-    std::cout << "params=" << std::endl;
-    rexpr_printer{indent + 2 * tabsize}(value.parameters_);
-    rexpr_printer{indent + tabsize}(value.block_);
+    rexpr_printer{indent + tabsize}(value.funcbody_);
 }
 
 void rexpr_printer::operator()(const field &value) const

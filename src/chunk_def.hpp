@@ -93,13 +93,13 @@ const auto namelist_expr_def = name_expr >> *(lit(',') >> name_expr);
 //! parlist ::= namelist [‘,’ ‘...’] | ‘...’
 const auto parlist_expr_def = (namelist_expr >> -(lit(',') >> lit("..."))) | lit("...");
 //! funcbody ::= ‘(’ [parlist] ‘)’ block end
-const auto funcbody = lit('(') >> -parlist_expr >> lit(')') >> block_expr >> lit("end");
+const auto funcbody_expr = as<ast::funcbody>(lit('(') >> -parlist_expr >> lit(')') >> block_expr >> lit("end"));
 //! function funcname funcbody
-const auto function_expr_def = lit("function") >> funcname_expr >> funcbody;
+const auto function_expr_def = lit("function") >> funcname_expr >> funcbody_expr;
 //! local function Name funcbody
-const auto local_function_expr_def = lit("local") >> lit("function") >> name_expr >> funcbody;
+const auto local_function_expr_def = lit("local") >> lit("function") >> name_expr >> funcbody_expr;
 //! functiondef ::= function funcbody
-const auto functiondef_expr_def = lit("function") >> funcbody;
+const auto functiondef_expr_def = lit("function") >> funcbody_expr;
 
 //! explist ::= exp {‘,’ exp}
 const auto explist_expr = as<ast::explist>(exp_expr >> *(lit(',') >> exp_expr));
@@ -110,7 +110,7 @@ const auto args_expr_def =
 //! exp ::=  nil | false | true | Numeral | LiteralString | ‘...’ | functiondef | prefixexp | tableconstructor | exp
 const auto exp_sec_expr_def = -(binary_expr);
 const auto exp_expr_def = (bool_ | numeral_expr | nil_expr | functiondef_expr | primaryexp_expr |
-                           tableconstructor_expr | unary_expr | literal_str_expr | lit("...")) >>
+                           tableconstructor_expr | unary_expr | literal_str_expr) >>
                           exp_sec_expr;
 
 const auto binary_expr_def = (binary_op >> exp_expr);

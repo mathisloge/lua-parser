@@ -16,9 +16,10 @@ BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::assign_or_call, primaryexp_, var_action
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::namelist, name_, chain_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::funcname, names_, self_chain_)
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::function, funcname_, parameters_, block_)
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::local_function, funcname_, parameters_, block_)
-BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::functiondef, parameters_, block_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::funcbody, parameters_, block_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::function, funcname_, funcbody_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::local_function, funcname_, funcbody_)
+BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::functiondef, funcbody_)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::for_namelist, name_list_, exp_list_, block_)
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::var_wrapper, var_, next_)

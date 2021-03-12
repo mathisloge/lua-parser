@@ -37,7 +37,7 @@ void initKeywords()
     // clang-format on
 
     keyword_break.add("break", ast::keyword_break);
-    keyword_nil.add("nil", ast::keyword_nil);
+    keyword_nil.add("nil", ast::keyword_nil)("...", ast::keyword_expand);
 }
 
 void initUnaryOp()

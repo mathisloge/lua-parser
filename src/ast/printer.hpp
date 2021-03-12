@@ -28,6 +28,7 @@ struct rexpr_printer
     void operator()(const function &value) const;
     void operator()(const local_function &value) const;
     void operator()(const namelist &value) const;
+    void operator()(const funcbody &value) const;
     void operator()(const functiondef &value) const;
     void operator()(const field &value) const;
     void operator()(const fieldlist &value) const;
