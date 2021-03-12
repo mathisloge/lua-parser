@@ -5,7 +5,7 @@ project(LuaParser
         HOMEPAGE_URL https://github.com/mathisloge/lua-parser
         LANGUAGES CXX)
 
-find_package(Boost REQUIRED COMPONENTS graph)
+find_package(Boost REQUIRED)
 
 
 add_executable(LuaParser 
@@ -24,5 +24,4 @@ set_property(TARGET LuaParser PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(LuaParser PRIVATE
     Boost::headers
-    Boost::graph
 )

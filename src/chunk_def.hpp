@@ -36,7 +36,8 @@ inline constexpr x3::rule<struct functioncall_expr_class, ast::functioncall> fun
 
 inline constexpr x3::rule<struct funcname_expr_class, ast::funcname> funcname_expr{"funcname_expr"};
 inline constexpr x3::rule<struct function_expr_class, ast::function> function_expr{"function_expr"};
-inline constexpr x3::rule<struct local_function_expr_class, ast::local_function> local_function_expr{"local_function_expr"};
+inline constexpr x3::rule<struct local_function_expr_class, ast::local_function> local_function_expr{
+    "local_function_expr"};
 inline constexpr x3::rule<struct functiondef_expr_class, ast::functiondef> functiondef_expr{"functiondef_expr"};
 
 inline constexpr x3::rule<struct for_namelist_expr_class, ast::for_namelist> for_namelist_expr{"for_namelist_expr"};
@@ -69,16 +70,13 @@ inline constexpr x3::rule<struct repeatuntil_class, ast::repeatuntil> repeatunti
 inline constexpr x3::rule<struct doblock_class, ast::doblock> doblock_expr{"doblock_expr"};
 inline constexpr x3::rule<struct forexp_class, ast::forexp> forexp_expr{"forexp_expr"};
 inline constexpr x3::rule<struct attnamelist_expr_class, ast::attnamelist> attnamelist_expr{"attnamelist_expr"};
-inline constexpr x3::rule<struct local_attnamelist_assign_class, ast::local_attnamelist_assign> local_attnamelist_assign_expr{
-    "local_attnamelist_assign_expr"};
+inline constexpr x3::rule<struct local_attnamelist_assign_class, ast::local_attnamelist_assign>
+    local_attnamelist_assign_expr{"local_attnamelist_assign_expr"};
 
 inline constexpr x3::rule<struct retstat_expr_class, ast::explist> retstat_expr{"retstat_expr"};
 inline constexpr x3::rule<struct stat_expr_class, ast::stat> stat_expr{"stat_expr"};
 inline constexpr x3::rule<struct block_expr_class, ast::block> block_expr{"block_expr"};
 inline constexpr chunk_type chunk_expr{"chunk_expr"};
-
-//  const auto nil_expr_def = lit("nil");
-
 
 //! label ::= ‘::’ Name ‘::’
 const auto label_expr_def = lit("::") >> name_expr >> lit("::");
@@ -108,22 +106,19 @@ const auto explist_expr = as<ast::explist>(exp_expr >> *(lit(',') >> exp_expr));
 //! args ::=  ‘(’ [explist] ‘)’ | tableconstructor | LiteralString
 const auto args_expr_def =
     as<ast::explist>(lit('(') >> -explist_expr >> lit(')')) | tableconstructor_expr | literal_str_expr;
-//! prefixexp is left recursive. So change it to a right recursive rule.
-//! P = prefixexp
-//! V = var
-//! F = functioncall
-//! P ::= V | F | ‘(’ exp ‘)’
-//! F::=  P args | P‘:’ Name args
-//! V::=  Name | P‘[’ exp ‘]’ | P‘.’ Name
-//! P ::= Name | P‘[’ exp ‘]’ | P‘.’ Name || P args | P‘:’ Name args  | ‘(’ exp ‘)’
-//!        V        P
-//! P = (Name | ‘(’ exp ‘)’) P'
-//!            V              V          F             F
-//! P'= ‘[’ exp ‘]’ P' | ‘.’ Name P' | args P' | ‘:’ Name args P'| e
-const auto prefixexp_sec_expr_def = -(functioncall_expr | (var_expr >> prefixexp_sec_expr));
-//! prefixexp ::= var | functioncall | ‘(’ exp ‘)’
-const auto prefixexp_expr_def = (as<ast::exp>(name_expr) | as<ast::exp>(lit('(') >> exp_expr >> lit(')')));
 
+//! exp ::=  nil | false | true | Numeral | LiteralString | ‘...’ | functiondef | prefixexp | tableconstructor | exp
+const auto exp_sec_expr_def = -(binary_expr);
+const auto exp_expr_def = (bool_ | numeral_expr | nil_expr | functiondef_expr | primaryexp_expr |
+                           tableconstructor_expr | unary_expr | literal_str_expr | lit("...")) >>
+                          exp_sec_expr;
+
+const auto binary_expr_def = (binary_op >> exp_expr);
+const auto unary_expr_def = (unary_op >> exp_expr);
+
+//! prefixexp ::= var | functioncall | ‘(’ exp ‘)’
+const auto prefixexp_sec_expr_def = -(functioncall_expr | (var_expr >> prefixexp_sec_expr));
+const auto prefixexp_expr_def = (as<ast::exp>(name_expr) | as<ast::exp>(lit('(') >> exp_expr >> lit(')')));
 const auto primaryexp_expr_def = prefixexp_expr >> prefixexp_sec_expr;
 
 //! functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
@@ -157,17 +152,6 @@ const auto tableconstructor_expr_def = lit('{') >> -fieldlist_expr >> lit('}');
 const auto for_namelist_expr_def = lit("for") >> namelist_expr >> lit("in") >> explist_expr >> lit("do") >> block_expr
                                    >> lit("end");
 
-//! exp ::=  nil | false | true | Numeral | LiteralString | ‘...’ | functiondef | prefixexp | tableconstructor | exp
-//! binop exp | unop exp exp binop exp is left recursive so we need to transform it. exp = (exp^binary_expr) exp' exp' =
-//! binop exp exp' | empty
-const auto exp_sec_expr_def = -(binary_expr);
-const auto exp_expr_def = (bool_ | numeral_expr | nil_expr | functiondef_expr | primaryexp_expr |
-                           tableconstructor_expr | unary_expr | literal_str_expr | lit("...")) >>
-                          exp_sec_expr;
-
-const auto binary_expr_def = (binary_op >> exp_expr);
-const auto unary_expr_def = (unary_op >> exp_expr);
-
 //! while exp do block end
 const auto whiledo_expr_def = lit("while") >> exp_expr >> lit("do") >> block_expr >> lit("end");
 //! repeat block until exp
@@ -176,7 +160,7 @@ const auto repeatuntil_expr_def = lit("repeat") >> block_expr >> lit("until") >>
 const auto doblock_expr_def = lit("do") >> block_expr >> lit("end");
 const auto forexp_exp_expr = lit(',') >> exp_expr;
 //! for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end
-const auto forexp_expr_def = lit("for") >> name_expr >> lit('=') >> exp_expr >> forexp_exp_expr >> -forexp_exp_expr >
+const auto forexp_expr_def = lit("for") >> name_expr >> lit('=') >> exp_expr >> forexp_exp_expr >> -forexp_exp_expr >>
                              lit("do") >> block_expr >> lit("end");
 
 //! attrib ::= [‘<’ Name ‘>’]
