@@ -27,7 +27,7 @@ int main()
         std::cout << "parsing succeeded" << std::endl;
         sre::lua::ast::rexpr_printer printer;
         // sre::lua::ast::dot_printer printer(0);
-        printer(chunk_out);
+        //printer(chunk_out);
     }
     else
     {

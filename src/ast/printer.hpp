@@ -50,7 +50,6 @@ struct rexpr_printer
     void operator()(const attnamelist &value) const;
     void operator()(const name_attrib_pair &value) const;
     void operator()(const ifelse_wrapper &value) const;
-    void operator()(const break_stmt &value) const;
     void operator()(const goto_stmt &value) const;
     void operator()(const keyword_stmt &value) const;
     void operator()(const numeral &value) const;

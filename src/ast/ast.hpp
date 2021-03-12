@@ -12,15 +12,42 @@ namespace sre::lua::ast
 {
 namespace x3 = boost::spirit::x3;
 
-// clang-format off
-    struct nil { };
-// clang-format on
+struct nil
+{};
 
 inline std::ostream &operator<<(std::ostream &out, nil)
 {
     out << "nil";
     return out;
 }
+
+enum optoken
+{
+    op_plus,           // => +
+    op_minus,          // => -
+    op_times,          // => *
+    op_divide,         // => /
+    op_floor_divide,   // => //
+    op_exponentiation, // => ^
+    op_modulo,         // => %
+    op_and,            // => &
+    op_xor,            // => ~
+    op_or,             // => |
+    op_right,          // => >>
+    op_left,           // => <<
+    op_concat,         // => ..
+    op_less,           // => <
+    op_less_eq,        // => <=
+    op_greater,        // => >
+    op_greater_eq,     // => >=
+    op_equal,          // => ==
+    op_inequal,        // => ~=
+    op_and_key,        // => and
+    op_or_key,         // => or
+    op_not,            // => not
+    op_prefix          // => #
+};
+
 // struct statement;
 struct expression;
 struct binary;
@@ -82,75 +109,6 @@ struct exp :
     using base_type::base_type;
     using base_type::operator=;
 };
-
-struct prefixexp : x3::variant<nil, x3::forward_ast<functioncall>, x3::forward_ast<var_wrapper>>
-{
-    using base_type::base_type;
-    using base_type::operator=;
-};
-
-struct primaryexpression
-{
-    exp first_;
-    prefixexp rest_;
-};
-
-struct var_assign_or_list : x3::variant<nil, x3::forward_ast<explist>, x3::forward_ast<varlist>>
-{
-    using base_type::base_type;
-    using base_type::operator=;
-};
-struct assign_or_call
-{
-    primaryexpression primaryexp_;
-    var_assign_or_list var_action_;
-};
-struct args : x3::variant<std::string, x3::forward_ast<tableconstructor>, x3::forward_ast<explist>>
-{
-    using base_type::base_type;
-    using base_type::operator=;
-};
-
-struct field
-{
-    exp first;
-    exp second;
-};
-using fieldlist = std::list<field>;
-
-struct tableconstructor
-{
-    field first_;
-    std::list<field> fields_;
-};
-
-enum optoken
-{
-    op_plus,           // => +
-    op_minus,          // => -
-    op_times,          // => *
-    op_divide,         // => /
-    op_floor_divide,   // => //
-    op_exponentiation, // => ^
-    op_modulo,         // => %
-    op_and,            // => &
-    op_xor,            // => ~
-    op_or,             // => |
-    op_right,          // => >>
-    op_left,           // => <<
-    op_concat,         // => ..
-    op_less,           // => <
-    op_less_eq,        // => <=
-    op_greater,        // => >
-    op_greater_eq,     // => >=
-    op_equal,          // => ==
-    op_inequal,        // => ~=
-    op_and_key,        // => and
-    op_or_key,         // => or
-    op_not,            // => not
-    op_prefix          // => #
-};
-
 struct binary : x3::position_tagged
 {
     // exp lhs_;
@@ -167,6 +125,47 @@ struct expression : x3::position_tagged
 {
     exp first_;
     exp rest_;
+};
+
+struct prefixexp : x3::variant<nil, x3::forward_ast<functioncall>, x3::forward_ast<var_wrapper>>
+{
+    using base_type::base_type;
+    using base_type::operator=;
+};
+
+struct primaryexpression
+{
+    exp first_;
+    prefixexp rest_;
+};
+
+struct var_assign_or_list : x3::variant<nil, explist, x3::forward_ast<varlist>>
+{
+    using base_type::base_type;
+    using base_type::operator=;
+};
+struct assign_or_call
+{
+    primaryexpression primaryexp_;
+    var_assign_or_list var_action_;
+};
+
+struct field
+{
+    exp first;
+    exp second;
+};
+using fieldlist = std::list<field>;
+
+struct tableconstructor
+{
+    field first_;
+    fieldlist fields_;
+};
+struct args : x3::variant<std::string, tableconstructor, explist>
+{
+    using base_type::base_type;
+    using base_type::operator=;
 };
 
 struct label
@@ -196,7 +195,7 @@ struct namelist
     Name name_;
     std::list<Name> chain_;
 };
-using parlist = namelist;
+
 struct funcname
 {
     namelist names_;
@@ -219,8 +218,6 @@ struct repeatuntil;
 struct doblock;
 struct forexp;
 struct local_attnamelist_assign;
-struct break_stmt
-{};
 struct goto_stmt
 {
     Name name_;
@@ -257,6 +254,7 @@ struct chunk : x3::position_tagged
     block block_;
 };
 
+using parlist = namelist;
 struct function
 {
     funcname funcname_;

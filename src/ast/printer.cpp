@@ -353,11 +353,6 @@ void rexpr_printer::operator()(const nil &nil) const
     std::cout << "nil " << std::endl;
 }
 
-void rexpr_printer::operator()(const break_stmt &value) const
-{
-    tab(indent);
-    std::cout << "break " << std::endl;
-}
 void rexpr_printer::operator()(const goto_stmt &value) const
 {
     tab(indent);
