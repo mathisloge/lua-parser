@@ -26,57 +26,57 @@ using x3::lexeme;
 using x3::lit;
 using x3::raw;
 
-inline constexpr x3::rule<struct label_expr_class, ast::label> label_expr{"label_expr"};
+inline const x3::rule<struct label_expr_class, ast::label> label_expr{"label_expr"};
 
-inline constexpr x3::rule<struct ifelse_expr_class, ast::ifelse> ifelse_expr{"ifelse_expr"};
+inline const x3::rule<struct ifelse_expr_class, ast::ifelse> ifelse_expr{"ifelse_expr"};
 
-inline constexpr x3::rule<struct args_expr_class, ast::args> args_expr{"args_expr"};
+inline const x3::rule<struct args_expr_class, ast::args> args_expr{"args_expr"};
 
-inline constexpr x3::rule<struct functioncall_expr_class, ast::functioncall> functioncall_expr{"functioncall_expr"};
+inline const x3::rule<struct functioncall_expr_class, ast::functioncall> functioncall_expr{"functioncall_expr"};
 
-inline constexpr x3::rule<struct funcname_expr_class, ast::funcname> funcname_expr{"funcname_expr"};
-inline constexpr x3::rule<struct function_expr_class, ast::function> function_expr{"function_expr"};
-inline constexpr x3::rule<struct local_function_expr_class, ast::local_function> local_function_expr{
+inline const x3::rule<struct funcname_expr_class, ast::funcname> funcname_expr{"funcname_expr"};
+inline const x3::rule<struct function_expr_class, ast::function> function_expr{"function_expr"};
+inline const x3::rule<struct local_function_expr_class, ast::local_function> local_function_expr{
     "local_function_expr"};
-inline constexpr x3::rule<struct functiondef_expr_class, ast::functiondef> functiondef_expr{"functiondef_expr"};
+inline const x3::rule<struct functiondef_expr_class, ast::functiondef> functiondef_expr{"functiondef_expr"};
 
-inline constexpr x3::rule<struct for_namelist_expr_class, ast::for_namelist> for_namelist_expr{"for_namelist_expr"};
+inline const x3::rule<struct for_namelist_expr_class, ast::for_namelist> for_namelist_expr{"for_namelist_expr"};
 
-inline constexpr x3::rule<struct field_expr_class, ast::field> field_expr{"field_expr"};
-inline constexpr x3::rule<struct tableconstructor_expr_class, ast::tableconstructor> tableconstructor_expr{
+inline const x3::rule<struct field_expr_class, ast::field> field_expr{"field_expr"};
+inline const x3::rule<struct tableconstructor_expr_class, ast::tableconstructor> tableconstructor_expr{
     "tableconstructor_expr"};
 
-inline constexpr x3::rule<struct var_expr_class, ast::var> var_expr{"var_expr"};
-inline constexpr x3::rule<struct assignment_or_call_expr_class, ast::assign_or_call> assignment_or_call_expr{
+inline const x3::rule<struct var_expr_class, ast::var> var_expr{"var_expr"};
+inline const x3::rule<struct assignment_or_call_expr_class, ast::assign_or_call> assignment_or_call_expr{
     "assignment_or_call_expr"};
-inline constexpr x3::rule<struct varlist_expr_class, ast::varlist> varlist_expr{"varlist_expr"};
+inline const x3::rule<struct varlist_expr_class, ast::varlist> varlist_expr{"varlist_expr"};
 
-inline constexpr x3::rule<struct namelist_expr_class, ast::namelist> namelist_expr{"namelist_expr"};
-inline constexpr x3::rule<struct parlist_expr_class, ast::namelist> parlist_expr{"parlist_expr"};
+inline const x3::rule<struct namelist_expr_class, ast::namelist> namelist_expr{"namelist_expr"};
+inline const x3::rule<struct parlist_expr_class, ast::namelist> parlist_expr{"parlist_expr"};
 
-inline constexpr x3::rule<struct exp_expr_class, ast::expression> exp_expr{"exp_expr"};
-inline constexpr x3::rule<struct exp_sec_expr_class, ast::exp> exp_sec_expr{"exp_sec_expr"};
+inline const x3::rule<struct exp_expr_class, ast::expression> exp_expr{"exp_expr"};
+inline const x3::rule<struct exp_sec_expr_class, ast::exp> exp_sec_expr{"exp_sec_expr"};
 
-inline constexpr x3::rule<struct var_assign_expr_class, ast::explist> var_assign_expr{"var_assign_expr"};
-inline constexpr x3::rule<struct primaryexp_expr_class, ast::primaryexpression> primaryexp_expr{"primaryexp_expr"};
-inline constexpr x3::rule<struct prefixexp_expr_class, ast::exp> prefixexp_expr{"prefixexp_expr"};
-inline constexpr x3::rule<struct prefixexp_sec_expr_class, ast::prefixexp> prefixexp_sec_expr{"prefixexp_sec_expr"};
+inline const x3::rule<struct var_assign_expr_class, ast::explist> var_assign_expr{"var_assign_expr"};
+inline const x3::rule<struct primaryexp_expr_class, ast::primaryexpression> primaryexp_expr{"primaryexp_expr"};
+inline const x3::rule<struct prefixexp_expr_class, ast::exp> prefixexp_expr{"prefixexp_expr"};
+inline const x3::rule<struct prefixexp_sec_expr_class, ast::prefixexp> prefixexp_sec_expr{"prefixexp_sec_expr"};
 
-inline constexpr x3::rule<struct binary_expr_class, ast::binary> binary_expr{"binary_expr"};
-inline constexpr x3::rule<struct unary_expr_class, ast::unary> unary_expr{"unary_expr"};
+inline const x3::rule<struct binary_expr_class, ast::binary> binary_expr{"binary_expr"};
+inline const x3::rule<struct unary_expr_class, ast::unary> unary_expr{"unary_expr"};
 
-inline constexpr x3::rule<struct whiledo_class, ast::whiledo> whiledo_expr{"whiledo_expr"};
-inline constexpr x3::rule<struct repeatuntil_class, ast::repeatuntil> repeatuntil_expr{"repeatuntil_expr"};
-inline constexpr x3::rule<struct doblock_class, ast::doblock> doblock_expr{"doblock_expr"};
-inline constexpr x3::rule<struct forexp_class, ast::forexp> forexp_expr{"forexp_expr"};
-inline constexpr x3::rule<struct attnamelist_expr_class, ast::attnamelist> attnamelist_expr{"attnamelist_expr"};
-inline constexpr x3::rule<struct local_attnamelist_assign_class, ast::local_attnamelist_assign>
+inline const x3::rule<struct whiledo_class, ast::whiledo> whiledo_expr{"whiledo_expr"};
+inline const x3::rule<struct repeatuntil_class, ast::repeatuntil> repeatuntil_expr{"repeatuntil_expr"};
+inline const x3::rule<struct doblock_class, ast::doblock> doblock_expr{"doblock_expr"};
+inline const x3::rule<struct forexp_class, ast::forexp> forexp_expr{"forexp_expr"};
+inline const x3::rule<struct attnamelist_expr_class, ast::attnamelist> attnamelist_expr{"attnamelist_expr"};
+inline const x3::rule<struct local_attnamelist_assign_class, ast::local_attnamelist_assign>
     local_attnamelist_assign_expr{"local_attnamelist_assign_expr"};
 
-inline constexpr x3::rule<struct retstat_expr_class, ast::explist> retstat_expr{"retstat_expr"};
-inline constexpr x3::rule<struct stat_expr_class, ast::stat> stat_expr{"stat_expr"};
-inline constexpr x3::rule<struct block_expr_class, ast::block> block_expr{"block_expr"};
-inline constexpr chunk_type chunk_expr{"chunk_expr"};
+inline const x3::rule<struct retstat_expr_class, ast::explist> retstat_expr{"retstat_expr"};
+inline const x3::rule<struct stat_expr_class, ast::stat> stat_expr{"stat_expr"};
+inline const x3::rule<struct block_expr_class, ast::block> block_expr{"block_expr"};
+inline const chunk_type chunk_expr{"chunk_expr"};
 
 //! label ::= ‘::’ Name ‘::’
 const auto label_expr_def = lit("::") >> name_expr >> lit("::");

@@ -69,6 +69,9 @@ struct ifelse;
 using explist = std::list<expression>;
 struct Name
 {
+    Name(std::string const &name = "")
+        : name(name)
+    {}
     std::string name;
 };
 
@@ -96,6 +99,7 @@ struct exp :
                 bool,
                 numeral,
                 std::string,
+                Name, // only needed for prefixexp_expr since as<ast::exp>(name) will return Name and not std::string on linux
                 x3::forward_ast<functiondef>,
                 x3::forward_ast<tableconstructor>,
                 x3::forward_ast<binary>,

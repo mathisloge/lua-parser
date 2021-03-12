@@ -1,0 +1,9 @@
+FROM ubuntu:20.04
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update
+RUN apt-get install -y build-essential g++10 cmake libboost-all-dev
+WORKDIR /luaparser
+COPY . .
+RUN cmake -S . -B build -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release
+RUN cmake --build build

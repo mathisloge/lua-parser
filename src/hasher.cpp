@@ -18,6 +18,9 @@ struct nil_exception : std::exception
     std::size_t var = 0; try { var = Hasher{}(exp); } catch (...) {}
 // clang-format on
 
+
+Hasher::Hasher() {}
+
 std::size_t Hasher::operator()(const chunk &ast) const
 {
     auto hash = std::hash<std::string>{}("chunk");
@@ -49,6 +52,7 @@ std::size_t Hasher::operator()(const explist &value) const
     {
         GET_EXP_HASH(hash, exp)
     }
+    return hash;
 }
 std::size_t Hasher::operator()(const prefixexp &value) const
 {
@@ -93,12 +97,14 @@ std::size_t Hasher::operator()(const function &value) const
     auto hash = std::hash<std::string>{}("function");
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.funcname_));
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.funcbody_));
+    return hash;
 }
 std::size_t Hasher::operator()(const local_function &value) const
 {
     auto hash = std::hash<std::string>{}("local_function");
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.funcname_));
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.funcbody_));
+    return hash;
 }
 std::size_t Hasher::operator()(const namelist &value) const
 {
@@ -148,6 +154,7 @@ std::size_t Hasher::operator()(const for_namelist &value) const
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.name_list_));
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.exp_list_));
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.block_));
+    return hash;
 }
 std::size_t Hasher::operator()(const functioncall &value) const
 {

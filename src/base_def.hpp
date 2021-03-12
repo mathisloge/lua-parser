@@ -36,15 +36,15 @@ inline x3::symbols<ast::optoken> unary_op;
 template <typename T>
 auto as = [](auto p) { return x3::rule<struct tag, T>{"as"} = p; };
 
-inline constexpr x3::rule<struct literal_str_expr_class, std::string> literal_str_expr{"literal_str_expr"};
-inline constexpr x3::rule<struct name_expr_class, ast::Name> name_expr{"name_expr"};
-inline constexpr x3::rule<struct nil_expr_class, ast::keyword_stmt> nil_expr{"nil_expr"};
-inline constexpr x3::rule<struct numeral_expr_class, ast::numeral> numeral_expr{"numeral_expr"};
+inline const x3::rule<struct literal_str_expr_class, std::string> literal_str_expr{"literal_str_expr"};
+inline const x3::rule<struct name_expr_class, ast::Name> name_expr{"name_expr"};
+inline const x3::rule<struct nil_expr_class, ast::keyword_stmt> nil_expr{"nil_expr"};
+inline const x3::rule<struct numeral_expr_class, ast::numeral> numeral_expr{"numeral_expr"};
 
 inline const auto distinct_keyword = lexeme[keywords >> !(x3::alnum | '_')];
 inline const auto unchecked_name = lexeme[(x3::alpha | x3::char_('_')) >> *(x3::alnum | x3::char_('_'))];
 
-constexpr auto genDelimStr = [](char delim) {
+const auto genDelimStr = [](char delim) {
     return x3::lexeme[omit[delim] > *(char_("\\\\") | '\\' >> -char_(delim) | (char_ - delim)) > omit[delim]];
 };
 
