@@ -108,7 +108,7 @@ void rexpr_printer::operator()(const expression &expression) const
 void rexpr_printer::operator()(const label &value) const
 {
     tab(indent);
-    std::cout << "label=" << value << std::endl;
+    std::cout << "label=" << value.name_.name << std::endl;
 }
 
 void rexpr_printer::operator()(const Name &value) const
@@ -354,7 +354,7 @@ void rexpr_printer::operator()(const nil &nil) const
 void rexpr_printer::operator()(const goto_stmt &value) const
 {
     tab(indent);
-    std::cout << "goto=" << value.name_ << std::endl;
+    std::cout << "goto=" << value.name_.name << std::endl;
 }
 
 void rexpr_printer::operator()(const keyword_stmt &value) const

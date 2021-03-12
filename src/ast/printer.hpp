@@ -1,8 +1,7 @@
 #pragma once
 #include <iostream>
 #include <map>
-#include "ast.hpp"
-#include "ast_adapted.hpp"
+#include "ast/ast.hpp"
 namespace sre::lua::ast
 {
 struct rexpr_printer

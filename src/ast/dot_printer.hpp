@@ -2,7 +2,7 @@
 #include <iostream>
 #include <map>
 #include <ostream>
-#include "ast.hpp"
+#include "ast/ast.hpp"
 namespace sre::lua::ast
 {
 

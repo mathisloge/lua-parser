@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/fusion/include/adapt_struct.hpp>
-#include "ast.hpp"
+#include "ast/ast.hpp"
 
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::Name, name)
 BOOST_FUSION_ADAPT_STRUCT(sre::lua::ast::goto_stmt, name_)
