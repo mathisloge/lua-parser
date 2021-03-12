@@ -67,11 +67,8 @@ struct prefixexp_container;
 struct varlist;
 struct ifelse;
 using explist = std::list<expression>;
-struct Name : x3::position_tagged
+struct Name
 {
-    Name(std::string const &name = "")
-        : name(name)
-    {}
     std::string name;
 };
 
@@ -139,41 +136,7 @@ struct primaryexpression
     prefixexp rest_;
 };
 
-struct var_assign_or_list : x3::variant<nil, explist, x3::forward_ast<varlist>>
-{
-    using base_type::base_type;
-    using base_type::operator=;
-};
-struct assign_or_call
-{
-    primaryexpression primaryexp_;
-    var_assign_or_list var_action_;
-};
-
-struct field
-{
-    exp first;
-    exp second;
-};
-using fieldlist = std::list<field>;
-
-struct tableconstructor
-{
-    field first_;
-    fieldlist fields_;
-};
-struct args : x3::variant<std::string, tableconstructor, explist>
-{
-    using base_type::base_type;
-    using base_type::operator=;
-};
-
-struct label
-{
-    Name name_;
-};
-
-struct var : x3::variant<Name, x3::forward_ast<exp>>
+struct var : x3::variant<Name, exp>
 {
     using base_type::base_type;
     using base_type::operator=;
@@ -194,6 +157,40 @@ struct namelist
 {
     Name name_;
     std::list<Name> chain_;
+};
+
+struct var_assign_or_list : x3::variant<nil, explist, varlist>
+{
+    using base_type::base_type;
+    using base_type::operator=;
+};
+struct assign_or_call
+{
+    primaryexpression primaryexp_;
+    var_assign_or_list var_action_;
+};
+
+struct field
+{
+    exp first;
+    exp second;
+};
+
+using fieldlist = std::list<field>;
+struct tableconstructor
+{
+    field first_;
+    fieldlist fields_;
+};
+struct args : x3::variant<std::string, tableconstructor, explist>
+{
+    using base_type::base_type;
+    using base_type::operator=;
+};
+
+struct label
+{
+    Name name_;
 };
 
 struct funcname

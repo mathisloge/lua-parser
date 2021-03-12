@@ -14,6 +14,7 @@ add_executable(LuaParser
     src/chunk.cpp
     src/base_def.cpp
     src/ast/printer.cpp
+    src/hasher.cpp
 )
 
 if(MSVC)
