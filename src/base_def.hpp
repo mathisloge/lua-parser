@@ -48,10 +48,9 @@ constexpr auto genDelimStr = [](char delim) {
     return x3::lexeme[omit[delim] > *(char_("\\\\") | '\\' >> -char_(delim) | (char_ - delim)) > omit[delim]];
 };
 
-// a literal string can't contain any keyword, so exclude it.
-// inline const auto literal_str_expr_def = lexeme['"' >> +(char_ - '"') >> '"'] | lexeme['\'' >> +(char_ - '\'') >>
-// '\''];
+
 inline const auto literal_str_expr_def = genDelimStr('"') | genDelimStr('\'');
+// a name can't be any keyword, so exclude it.
 inline const auto name_expr_def = raw[unchecked_name - distinct_keyword];
 
 inline const auto nil_expr_def = keyword_nil;
