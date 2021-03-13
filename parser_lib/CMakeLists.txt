@@ -12,6 +12,10 @@ add_library(lua-parser-lib SHARED
     src/parser.cpp
 )
 set_property(TARGET lua-parser-lib PROPERTY CXX_STANDARD 20)
+if(MSVC)
+    set_property(TARGET lua-parser-lib APPEND PROPERTY COMPILE_OPTIONS "/bigobj")
+endif()
+
 
 generate_export_header(lua-parser-lib BASE_NAME LuaParser)
 
