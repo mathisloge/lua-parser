@@ -15,6 +15,10 @@ add_executable(LuaParser
     src/ast/printer.cpp
     src/ast/dot_printer.cpp
     src/hasher.cpp
+    src/mass.cpp
+    src/clone.cpp
+    src/bucketer.cpp
+    src/walker.cpp
 )
 
 if(MSVC)

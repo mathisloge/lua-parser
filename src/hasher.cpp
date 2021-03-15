@@ -18,8 +18,8 @@ struct nil_exception : std::exception
     std::size_t var = 0; try { var = Hasher{}(exp); } catch (...) {}
 // clang-format on
 
-
-Hasher::Hasher() {}
+Hasher::Hasher()
+{}
 
 std::size_t Hasher::operator()(const chunk &ast) const
 {
@@ -38,7 +38,12 @@ std::size_t Hasher::operator()(const block &block) const
 std::size_t Hasher::operator()(const stat &stat) const
 {
     auto hash = Hasher{}("stat");
-    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, stat));
+    try
+    {
+        boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, stat));
+    }
+    catch (...)
+    {}
     return hash;
 }
 std::size_t Hasher::operator()(const exp &exp) const
@@ -57,7 +62,12 @@ std::size_t Hasher::operator()(const explist &value) const
 std::size_t Hasher::operator()(const prefixexp &value) const
 {
     auto hash = std::hash<std::string>{}("prefixexp");
-    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value));
+    try
+    {
+        boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value));
+    }
+    catch (...)
+    {}
     return hash;
 }
 std::size_t Hasher::operator()(const expression &expression) const
@@ -130,8 +140,8 @@ std::size_t Hasher::operator()(const functiondef &value) const
 std::size_t Hasher::operator()(const field &value) const
 {
     auto hash = std::hash<std::string>{}("field");
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.first));
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.second));
+    GET_EXP_HASH(hash, value.first)
+    GET_EXP_HASH(hash, value.second)
     return hash;
 }
 std::size_t Hasher::operator()(const fieldlist &value) const
@@ -175,7 +185,7 @@ std::size_t Hasher::operator()(const var &value) const
 }
 std::size_t Hasher::operator()(const var_wrapper &value) const
 {
-    auto hash = Hasher{}(value.var_);
+    GET_EXP_RAW_HASH(hash, value.var_)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.next_));
     return hash;
 }
@@ -183,14 +193,14 @@ std::size_t Hasher::operator()(const varlist &value) const
 {
     auto hash = std::hash<std::string>{}("varlist");
     for (const auto &var : value.rest_)
-        boost::hash_detail::hash_combine_impl(hash, Hasher{}(var));
+        GET_EXP_HASH(hash, var)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.explist_));
     return hash;
 }
 std::size_t Hasher::operator()(const whiledo &value) const
 {
     auto hash = std::hash<std::string>{}("while");
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.exp_));
+    GET_EXP_HASH(hash, value.exp_)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.block_));
     return hash;
 }
@@ -198,7 +208,7 @@ std::size_t Hasher::operator()(const repeatuntil &value) const
 {
     auto hash = std::hash<std::string>{}("repeat");
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.block_));
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.exp_));
+    GET_EXP_HASH(hash, value.exp_)
     return hash;
 }
 std::size_t Hasher::operator()(const doblock &value) const
@@ -211,9 +221,9 @@ std::size_t Hasher::operator()(const forexp &value) const
 {
     auto hash = std::hash<std::string>{}("for");
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.name_));
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.exp_first_));
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.exp_second_));
-    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.exp_third_));
+    GET_EXP_HASH(hash, value.exp_first_)
+    GET_EXP_HASH(hash, value.exp_second_)
+    GET_EXP_HASH(hash, value.exp_third_)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.block_));
     return hash;
 }
@@ -259,7 +269,7 @@ std::size_t Hasher::operator()(const ifelse &value) const
 std::size_t Hasher::operator()(const ifelse_wrapper &value) const
 {
     auto hash_if = std::hash<std::string>{}("if");
-    boost::hash_detail::hash_combine_impl(hash_if, Hasher{}(value.exp_));
+    GET_EXP_HASH(hash_if, value.exp_)
     boost::hash_detail::hash_combine_impl(hash_if, Hasher{}(value.block_));
     return hash_if;
 }
@@ -272,13 +282,13 @@ std::size_t Hasher::operator()(const goto_stmt &value) const
 std::size_t Hasher::operator()(const unary &unary) const
 {
     auto hash_op = std::hash<optoken>{}(unary.operator_);
-    boost::hash_detail::hash_combine_impl(hash_op, Hasher{}(unary.rhs_));
+    GET_EXP_HASH(hash_op, unary.rhs_)
     return hash_op;
 }
 std::size_t Hasher::operator()(const binary &bin) const
 {
     auto hash_op = std::hash<optoken>{}(bin.operator_);
-    boost::hash_detail::hash_combine_impl(hash_op, Hasher{}(bin.rhs_));
+    GET_EXP_HASH(hash_op, bin.rhs_)
     return hash_op;
 }
 std::size_t Hasher::operator()(const keyword_stmt &value) const
@@ -312,5 +322,6 @@ std::size_t Hasher::operator()(const bool &value) const
 std::size_t Hasher::operator()(const nil &nil) const
 {
     throw nil_exception{};
+    // return 0;
 }
 } // namespace sre::lua::ast

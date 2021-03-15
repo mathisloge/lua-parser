@@ -108,9 +108,10 @@ const auto args_expr_def =
     as<ast::explist>(lit('(') >> -explist_expr >> lit(')')) | tableconstructor_expr | literal_str_expr;
 
 //! exp ::=  nil | false | true | Numeral | LiteralString | ‘...’ | functiondef | prefixexp | tableconstructor | exp
+//! numeral muss nach literal kommen, da inf auch als double geparst wird. 
 const auto exp_sec_expr_def = -(binary_expr);
-const auto exp_expr_def = (bool_ | numeral_expr | nil_expr | functiondef_expr | primaryexp_expr |
-                           tableconstructor_expr | unary_expr | literal_str_expr) >>
+const auto exp_expr_def = (bool_ | nil_expr | functiondef_expr | primaryexp_expr |
+                           tableconstructor_expr | unary_expr | literal_str_expr | numeral_expr) >>
                           exp_sec_expr;
 
 const auto binary_expr_def = (binary_op >> exp_expr);
