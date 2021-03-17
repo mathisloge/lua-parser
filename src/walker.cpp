@@ -9,7 +9,7 @@ namespace sre::lua::ast
     auto start_it = clones_.begin();                                                                                   \
     if (is<val_type, const val_type *>(value, start_it, clones_.end()))                                                \
     {                                                                                                                  \
-        clone_matches_.push_back(*start_it);                                                                            \
+        clone_matches_.push_back(*start_it);                                                                           \
         if (prev_clone_matches_.size() != 0)                                                                           \
             return true;                                                                                               \
     }
@@ -266,30 +266,27 @@ bool Walker::operator()(const numeral &value)
 }
 bool Walker::operator()(const Name &value)
 {
-    return false;
+    F
 }
 bool Walker::operator()(const std::string &value)
 {
-    return false;
+    F
 }
 bool Walker::operator()(const double &value)
 {
-    return false;
+    F
 }
 bool Walker::operator()(const unsigned &value)
 {
-    return false;
+    F
 }
 bool Walker::operator()(const bool &value)
 {
-    return false;
+    F
 }
-bool Walker::operator()(const nil &nil)
-{
-    return false;
-}
+bool Walker::operator()(const nil &nil){F}
 
-Walker::Clones Walker::clones() const
+Clones Walker::clones() const
 {
     return clone_matches_;
 }

@@ -1,26 +1,23 @@
 #pragma once
 #include <iostream>
 #include "bucketer.hpp"
+#include "types.hpp"
 namespace sre::lua::ast
 {
 class Walker final
 {
-  public:
-    using Clones = std::vector<std::pair<Unit, Unit>>;
-    using Cit = Clones::iterator;
-    using Ccit = Clones::const_iterator;
-
   private:
     const Clones &clones_;
     const Clones &prev_clone_matches_;
     Clones clone_matches_;
 
     template <typename T, typename Tp>
-    bool is(const T &val, Walker::Ccit &start, Walker::Ccit end)
+    bool is(const T &val, Ccit &start, Ccit end)
     {
 
         for (; start != end; start++)
         {
+            // hier reicht ein simpler zeiger vergleich, da die Daten in diesen Schritten nicht kopiert werden.
             auto p1 = std::get_if<Tp>(&start->first);
             auto p2 = std::get_if<Tp>(&start->second);
             if ((p1 && *p1 == &val) || (p2 && *p2 == &val))

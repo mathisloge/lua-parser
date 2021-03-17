@@ -59,9 +59,9 @@ void Bucketer::operator()(const stat &stat)
 }
 void Bucketer::operator()(const exp &exp)
 {
-    CHECK(exp)
+    //CHECK(exp)
     VISIT(exp)
-    ENDCHECK
+    //ENDCHECK
 }
 void Bucketer::operator()(const explist &value)
 {

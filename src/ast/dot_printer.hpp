@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include <ostream>
+#include "../types.hpp"
 #include "ast/ast.hpp"
 namespace sre::lua::ast
 {
@@ -9,7 +10,7 @@ namespace sre::lua::ast
 class DotPrinter final
 {
   public:
-    DotPrinter(std::ostream &out);
+    DotPrinter(std::ostream &out, const Clones &clones);
     void operator()(const chunk &ast);
     ~DotPrinter();
 
@@ -62,10 +63,31 @@ class DotPrinter final
 
     void node(const intptr_t parent, const std::string &label);
     void edge(const intptr_t parent, const intptr_t child);
-    int getId();
+    int getId();  
+
+    void printClones();
+
+  private:
+    template <typename T, typename Tp>
+    void is(const T &val, Ccit &start, Ccit end, int id)
+    {
+
+        for (; start != end; start++)
+        {
+            // hier reicht ein simpler zeiger vergleich, da die Daten in diesen Schritten nicht kopiert werden.
+            auto p1 = std::get_if<Tp>(&start->first);
+            auto p2 = std::get_if<Tp>(&start->second);
+            if ((p1 && *p1 == &val) || (p2 && *p2 == &val))
+            {
+                clones_processed_.emplace_back(start, id);
+            }
+        }
+    }
 
   private:
     std::ostream &out_;
+    const Clones &clones_;
+    std::vector<std::pair<Clones::const_iterator, int>> clones_processed_;
     int counter;
 };
 

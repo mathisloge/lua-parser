@@ -53,12 +53,10 @@ int parsefile(const std::string &file)
         std::cout << "parsing succeeded" << std::endl;
         std::ofstream ofs{fs::path(file).replace_extension(".dot")};
 
-        sre::lua::ast::DotPrinter printer{ofs};
-        sre::lua::ast::Hasher hasher{};
-        printer(chunk);
-
         sre::lua::ast::Clone cloner;
         cloner.run(chunk);
+        sre::lua::ast::DotPrinter printer{ofs, cloner.clones()};
+        printer(chunk);
     }
     else
     {

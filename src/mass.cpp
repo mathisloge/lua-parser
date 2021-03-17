@@ -17,7 +17,7 @@ std::size_t Mass::operator()(const block &block) const
 }
 std::size_t Mass::operator()(const stat &stat) const
 {
-    return boost::apply_visitor(Mass{}, stat);
+    return 1 + boost::apply_visitor(Mass{}, stat);
 }
 std::size_t Mass::operator()(const exp &exp) const
 {

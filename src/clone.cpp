@@ -1,6 +1,7 @@
 #include "clone.hpp"
 #include <algorithm>
 #include <iostream>
+#include <set>
 #include "bucketer.hpp"
 #include "hasher.hpp"
 #include "mass.hpp"
@@ -15,14 +16,6 @@ bool operator<(const BucketItem &x, const BucketItem &y)
 static bool isEqual(const BucketItem &x, const BucketItem &y)
 {
     return std::get<1>(x) == std::get<1>(y);
-}
-
-bool Clone::isMember(const Unit &a, const Unit &b, const std::vector<ClonePair> &clones) const
-{
-    auto it = std::find_if(clones.begin(), clones.end(), [&a, &b](const ClonePair &clone_pair) {
-        return clone_pair.first == a && clone_pair.second == b;
-    });
-    return it != clones.end();
 }
 
 void Clone::addChunk(chunk &&chunkt)
@@ -40,7 +33,7 @@ void Clone::run(const chunk &chunk)
 
     std::sort(buckets.begin(), buckets.end());
 
-    std::vector<ClonePair> clones;
+    Clones clones;
     for (auto bit = buckets.begin(); bit != buckets.end(); bit++)
     {
         for (auto it = buckets.begin(); it != buckets.end(); it++)
@@ -80,12 +73,45 @@ void Clone::run(const chunk &chunk)
             }
         }
     }
+
+    {
+        Clones unique_clones;
+        for (const auto &c : clones)
+        {
+            auto f_it = std::find_if(unique_clones.begin(), unique_clones.end(), [&c](const auto &x) {
+                return (c.first == x.first || c.first == x.second) && (c.second == x.first || c.second == x.second);
+            });
+            if (f_it == unique_clones.end())
+            {
+                unique_clones.emplace_back(c);
+            }
+        }
+        clones = unique_clones;
+    }
+
     std::cout << "Clones: " << clones.size() << std::endl;
+
+    std::cout << "========= STEP2 ===========" << std::endl;
+    const int min_len = 0;
+    const int max_len = 6;
+    std::vector<int> range(max_len);
+    std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
+
+    for (auto k : range)
+    {}
+
+    clones_ = clones;
+
 #if 0
     std::cout << "============" << std::endl;
     do
         std::cout << "cmp hash " << std::get<1>(buckets[0]) << " == " << std::get<1>(buckets[1]) << std::endl;
     while (std::next_permutation(buckets.begin(), buckets.end()));
 #endif
+}
+
+const Clones &Clone::clones() const
+{
+    return clones_;
 }
 } // namespace sre::lua::ast
