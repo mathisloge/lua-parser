@@ -92,13 +92,31 @@ void Clone::run(const chunk &chunk)
     std::cout << "Clones: " << clones.size() << std::endl;
 
     std::cout << "========= STEP2 ===========" << std::endl;
-    const int min_len = 0;
+    const int min_len = 2;
     const int max_len = 6;
     std::vector<int> range(max_len);
     std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
 
+    auto genSubsequences = [](int k, const Clones &clones) {
+        std::vector<std::vector<Unit>> buckets;
+
+
+        std::vector<Unit> clone_pairs;
+        clone_pairs.reserve(k);
+
+        for (const auto &c : clones)
+        {
+
+        }
+
+        return buckets;
+    };
     for (auto k : range)
-    {}
+    {
+        std::vector<Unit> clone_pairs;
+
+        clone_pairs.reserve(k);
+    }
 
     clones_ = clones;
 

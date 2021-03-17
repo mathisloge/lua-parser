@@ -54,7 +54,7 @@ void DotPrinter::operator()(const chunk &ast)
     node(self, "chunk");
     (*this)(self, ast.block_);
     out_ << "}" << std::endl;
-    printClones();
+    //printClones();
 }
 void DotPrinter::operator()(const intptr_t parent, const ast::block &block)
 {

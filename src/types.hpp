@@ -1,7 +1,7 @@
 #pragma once
-#include <vector>
-#include <variant>
 #include <tuple>
+#include <variant>
+#include <vector>
 #include <ast/ast.hpp>
 namespace sre::lua::ast
 {
@@ -46,8 +46,9 @@ using Unit = std::variant<const chunk *,
                           const keyword_stmt *,
                           const numeral *>;
 
-// mass, size, subtree
-using BucketItem = std::tuple<std::size_t, std::size_t, Unit>;
+using MassVal = std::size_t;
+using HashVal = std::size_t;
+using BucketItem = std::tuple<MassVal, HashVal, Unit>;
 using BucketList = std::vector<BucketItem>;
 
 using ClonePair = std::pair<Unit, Unit>;
