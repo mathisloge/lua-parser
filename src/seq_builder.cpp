@@ -2,259 +2,259 @@
 #include <iostream>
 namespace sre::lua::ast
 {
-SeqBuilder::SeqBuilder(const Clones &clones)
+
+#define check_list(var)                                                                                                \
+    std::vector<ClonePair> subseq;                                                                                     \
+    for (const auto &c : clones_)                                                                                      \
+    {                                                                                                                  \
+        if (c.first.index() != c.second.index())                                                                       \
+            continue;                                                                                                  \
+                                                                                                                       \
+        std::pair<bool, bool> clone_found{false, false};                                                               \
+        for (const auto &s : var)                                                                                      \
+        {                                                                                                              \
+            const auto idx = is<std::remove_cv<std::remove_reference<decltype(s)>::type>::type>(s, c);                 \
+            if (idx == 1)                                                                                              \
+            {                                                                                                          \
+                if (!clone_found.first)                                                                                \
+                    clone_found.first = true;                                                                          \
+                else                                                                                                   \
+                    std::cout << "got same clone for first...?" << std::endl;                                          \
+            }                                                                                                          \
+            else if (idx == 2)                                                                                         \
+            {                                                                                                          \
+                if (!clone_found.second)                                                                               \
+                    clone_found.second = true;                                                                         \
+                else                                                                                                   \
+                    std::cout << "got same clone for second...?" << std::endl;                                         \
+            }                                                                                                          \
+            if (clone_found.first && clone_found.second)                                                               \
+                break;                                                                                                 \
+        }                                                                                                              \
+        if (clone_found.first && clone_found.second)                                                                   \
+        {                                                                                                              \
+            subseq.push_back(c);                                                                                       \
+        }                                                                                                              \
+    }                                                                                                                  \
+    if (subseq.size() > min_seq_len_)                                                                                  \
+    {                                                                                                                  \
+        clone_seq_.push_back(subseq);                                                                                  \
+    }
+#define call(var) (*this)(var)
+#define call_list(var)                                                                                                 \
+    for (const auto &v : var)                                                                                          \
+        call(v);
+#define call_visit(var) boost::apply_visitor(*this, var)
+
+SeqBuilder::SeqBuilder(const Clones &clones, size_t min_seq_len)
     : clones_{clones}
+    , min_seq_len_{min_seq_len}
 {}
 
-bool SeqBuilder::operator()(const chunk &ast)
+const std::vector<std::vector<ClonePair>> &SeqBuilder::subsequences() const
 {
-    std::cout << "chunk mass " << 1 + (*this)(ast.block_) << std::endl;
-    return 1 + (*this)(ast.block_);
+    return clone_seq_;
 }
-bool SeqBuilder::operator()(const block &block)
+
+SeqBuilder& SeqBuilder::operator()(const chunk &ast)
 {
-    for (const auto &c : clones_)
+    call(ast.block_);
+    return *this;
+}
+void SeqBuilder::operator()(const block &block)
+{
+    for (const auto &s : block.stat_)
     {
-        // .index returns the stored type. if the indexes don't match, it isn't the same type. It shouldn't happen
-        // either since the hashes should be different. but we could cope with hash collisions.
-        if (c.first.index() != c.second.index())
-            continue;
-
-        std::pair<bool, bool> clone_found{false, false};
-        for (const auto &s : block.stat_)
-        {
-            const auto idx = is<stat>(s, c);
-            if (idx == 1)
-            {
-                if (!clone_found.first)
-                    clone_found.first = true;
-                else
-                    std::cout << "got same clone for first...?" << std::endl;
-            }
-            else if (idx == 2)
-            {
-                if (!clone_found.second)
-                    clone_found.second = true;
-                else
-                    std::cout << "got same clone for second...?" << std::endl;
-            }
-
-            if (clone_found.first && clone_found.second)
-                break;
-        }
-
-        if (clone_found.first && clone_found.second){
-            
-        }
+        // using val_type = std::remove_cv<std::remove_reference<decltype(s)>::type>::type;
     }
-
-    return true;
+    check_list(block.stat_);
+    call_list(block.stat_);
+    call(block.retstat_);
 }
-bool SeqBuilder::operator()(const stat &stat)
+void SeqBuilder::operator()(const stat &stat)
 {
-    return 1 + boost::apply_visitor(*this, stat);
+    call_visit(stat);
 }
-bool SeqBuilder::operator()(const exp &exp)
+void SeqBuilder::operator()(const exp &exp)
 {
-    return 1 + boost::apply_visitor(*this, exp);
+    call_visit(exp);
 }
-bool SeqBuilder::operator()(const explist &value)
+void SeqBuilder::operator()(const explist &value)
 {
-    bool x = 1;
-    for (const auto &v : value)
-        x += (*this)(v);
-    return x;
+    check_list(value);
+    call_list(value);
 }
-bool SeqBuilder::operator()(const prefixexp &value)
+void SeqBuilder::operator()(const prefixexp &value)
 {
-    return 1 + boost::apply_visitor(*this, value);
+    call_visit(value);
 }
-bool SeqBuilder::operator()(const expression &expression)
+void SeqBuilder::operator()(const expression &expression)
 {
-    bool x = (*this)(expression.first_);
-    return x + (*this)(expression.rest_);
+    // eigentlich koennen hier keine klon-paare entstehen. denn wenn klone vorhanden sind, werden die in diesem fall bis
+    // zum stat oder explist subsumiert.
+    call(expression.first_);
+    call(expression.rest_);
 }
-bool SeqBuilder::operator()(const primaryexpression &value)
+void SeqBuilder::operator()(const primaryexpression &value)
 {
-    return 1 + (*this)(value.first_) + (*this)(value.rest_);
+    // eigentlich koennen hier keine klon-paare entstehen. denn wenn klone vorhanden sind, werden die in diesem fall bis
+    // zum stat oder explist subsumiert.
+    call(value.first_);
+    call(value.rest_);
 }
-bool SeqBuilder::operator()(const assign_or_call &value)
+void SeqBuilder::operator()(const assign_or_call &value)
 {
-    return 1 + (*this)(value.primaryexp_) + (*this)(value.var_action_);
+    // eigentlich koennen hier keine klon-paare entstehen. denn wenn klone vorhanden sind, werden die in diesem fall bis
+    // zum stat oder explist subsumiert.
+    call(value.primaryexp_);
+    call(value.var_action_);
 }
-bool SeqBuilder::operator()(const label &value)
+void SeqBuilder::operator()(const label &value)
+{}
+void SeqBuilder::operator()(const funcname &value)
 {
-    return 1 + (*this)(value.name_);
+    call(value.names_);
 }
-bool SeqBuilder::operator()(const funcname &value)
+void SeqBuilder::operator()(const function &value)
 {
-    return 1 + (*this)(value.names_) + (*this)(value.self_chain_);
+    call(value.funcname_);
+    call(value.funcbody_);
 }
-bool SeqBuilder::operator()(const function &value)
+void SeqBuilder::operator()(const local_function &value)
 {
-    return 1 + (*this)(value.funcname_) + (*this)(value.funcbody_);
+    call(value.funcname_);
+    call(value.funcbody_);
 }
-bool SeqBuilder::operator()(const local_function &value)
+void SeqBuilder::operator()(const namelist &value)
 {
-    return 1 + (*this)(value.funcname_) + (*this)(value.funcbody_);
 }
-bool SeqBuilder::operator()(const namelist &value)
+void SeqBuilder::operator()(const functiondef &value)
 {
-    return 1 + (*this)(value.name_) + [&]() {
-        size_t x = 0;
-        for (const auto &v : value.chain_)
-            x += (*this)(v);
-        return x;
-    }();
+    call(value.funcbody_);
 }
-bool SeqBuilder::operator()(const functiondef &value)
+void SeqBuilder::operator()(const field &value)
 {
-    return 1 + (*this)(value.funcbody_);
+    call(value.first);
+    call(value.second);
 }
-bool SeqBuilder::operator()(const field &value)
+void SeqBuilder::operator()(const fieldlist &value)
 {
-    return 1 + (*this)(value.first) + (*this)(value.second);
+    check_list(value);
+    call_list(value);
 }
-bool SeqBuilder::operator()(const fieldlist &value)
+void SeqBuilder::operator()(const tableconstructor &value)
 {
-    bool x = 1;
-    for (const auto &v : value)
-        x += (*this)(v);
-    return x;
+    call(value.first_);
+    call(value.fields_);
 }
-bool SeqBuilder::operator()(const tableconstructor &value)
+void SeqBuilder::operator()(const for_namelist &value)
 {
-    return 1 + (*this)(value.first_) + (*this)(value.fields_);
+    call(value.name_list_);
+    call(value.exp_list_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const for_namelist &value)
+void SeqBuilder::operator()(const funcbody &value)
 {
-    return 1 + (*this)(value.name_list_) + (*this)(value.exp_list_) + (*this)(value.block_);
+    call(value.parameters_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const funcbody &value)
+void SeqBuilder::operator()(const functioncall &value)
 {
-    return 1 + (*this)(value.parameters_) + (*this)(value.block_);
+    call(value.args_);
+    call(value.prefix_exp_);
 }
-bool SeqBuilder::operator()(const functioncall &value)
+void SeqBuilder::operator()(const args &value)
 {
-    return 1 + (value.name_.has_value() ? (*this)(value.name_.value()) : 0) + (*this)(value.args_) +
-           (*this)(value.prefix_exp_);
+    call_visit(value);
 }
-bool SeqBuilder::operator()(const args &value)
+void SeqBuilder::operator()(const var &value)
 {
-    return 1 + boost::apply_visitor(*this, value);
+    call_visit(value);
 }
-bool SeqBuilder::operator()(const var &value)
+void SeqBuilder::operator()(const var_wrapper &value)
 {
-    return 1 + boost::apply_visitor(*this, value);
+    call(value.var_);
+    call(value.next_);
 }
-bool SeqBuilder::operator()(const var_wrapper &value)
+void SeqBuilder::operator()(const varlist &value)
 {
-    return 1 + (*this)(value.var_) + (*this)(value.next_);
+    call(value.explist_);
+    check_list(value.rest_);
+    call_list(value.rest_);
 }
-bool SeqBuilder::operator()(const varlist &value)
+void SeqBuilder::operator()(const var_assign_or_list &value)
 {
-    bool x = 1 + (*this)(value.explist_);
-    for (const auto &v : value.rest_)
-        x += (*this)(v);
-    return x;
+    call_visit(value);
 }
-bool SeqBuilder::operator()(const var_assign_or_list &value)
+void SeqBuilder::operator()(const whiledo &value)
 {
-    return 1 + boost::apply_visitor(*this, value);
+    call(value.exp_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const whiledo &value)
+void SeqBuilder::operator()(const repeatuntil &value)
 {
-    return 1 + (*this)(value.exp_) + (*this)(value.block_);
+    call(value.exp_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const repeatuntil &value)
+void SeqBuilder::operator()(const doblock &value)
 {
-    return 1 + (*this)(value.exp_) + (*this)(value.block_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const doblock &value)
+void SeqBuilder::operator()(const forexp &value)
 {
-    return 1 + (*this)(value.block_);
+    call(value.name_);
+    call(value.exp_first_);
+    call(value.exp_second_);
+    call(value.exp_third_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const forexp &value)
+void SeqBuilder::operator()(const local_attnamelist_assign &value)
 {
-    return 1 + (*this)(value.name_) + (*this)(value.exp_first_) + (*this)(value.exp_second_) +
-           (*this)(value.exp_third_) + (*this)(value.block_);
+    call(value.attnamelist_);
+    call(value.explist_);
 }
-bool SeqBuilder::operator()(const local_attnamelist_assign &value)
+void SeqBuilder::operator()(const attnamelist &value)
 {
-    return 1 + (*this)(value.attnamelist_) + (*this)(value.explist_);
+    check_list(value.rest_);
+    call_list(value.rest_);
 }
-bool SeqBuilder::operator()(const attnamelist &value)
+void SeqBuilder::operator()(const name_attrib_pair &value)
+{}
+void SeqBuilder::operator()(const ifelse &value)
 {
-    return 1 + (*this)(value.first_) + [&]() {
-        bool x = 0;
-        for (const auto &v : value.rest_)
-            x += (*this)(v);
-        return x;
-    }();
+    call(value.first_);
+    check_list(value.rest_);
+    call_list(value.rest_);
+    if (value.else_.has_value())
+        call(value.else_.value());
 }
-bool SeqBuilder::operator()(const name_attrib_pair &value)
+void SeqBuilder::operator()(const ifelse_wrapper &value)
 {
-    return 1 + (*this)(value.name_) + (value.attrib_.has_value() ? (*this)(value.attrib_.value()) : 0);
+    call(value.exp_);
+    call(value.block_);
 }
-bool SeqBuilder::operator()(const ifelse &value)
-{
-    return 1 + (*this)(value.first_) + [&]() {
-        bool x = 0;
-        for (const auto &v : value.rest_)
-            x += (*this)(v);
-        return x;
-    }() + (value.else_.has_value() ? (*this)(value.else_.value()) : 0);
-}
-bool SeqBuilder::operator()(const ifelse_wrapper &value)
-{
-    return (*this)(value.exp_) + (*this)(value.block_);
-}
-bool SeqBuilder::operator()(const goto_stmt &value)
-{
-    return 1 + (*this)(value.name_);
-}
-bool SeqBuilder::operator()(const unary &unary)
-{
-    return 1 + (*this)(unary.operator_) + (*this)(unary.rhs_);
-}
-bool SeqBuilder::operator()(const binary &bin)
-{
-    return 1 + (*this)(bin.operator_) + (*this)(bin.rhs_);
-}
-bool SeqBuilder::operator()(const keyword_stmt &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const numeral &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const Name &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const std::string &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const double &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const unsigned &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const bool &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const optoken &)
-{
-    return 1;
-}
-bool SeqBuilder::operator()(const nil &)
-{
-    return 0;
-}
+void SeqBuilder::operator()(const goto_stmt &value)
+{}
+void SeqBuilder::operator()(const unary &unary)
+{}
+void SeqBuilder::operator()(const binary &bin)
+{}
+void SeqBuilder::operator()(const keyword_stmt &)
+{}
+void SeqBuilder::operator()(const numeral &)
+{}
+void SeqBuilder::operator()(const Name &)
+{}
+void SeqBuilder::operator()(const std::string &)
+{}
+void SeqBuilder::operator()(const double &)
+{}
+void SeqBuilder::operator()(const unsigned &)
+{}
+void SeqBuilder::operator()(const bool &)
+{}
+void SeqBuilder::operator()(const optoken &)
+{}
+void SeqBuilder::operator()(const nil &)
+{}
 } // namespace sre::lua::ast

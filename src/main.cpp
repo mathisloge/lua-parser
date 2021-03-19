@@ -14,23 +14,31 @@ namespace fs = std::filesystem;
 int parsefile(const std::string &file);
 int main()
 {
-#if 0
+#if 1
     std::vector<std::thread> threads_;
     for (auto &p : fs::recursive_directory_iterator("testdir"))
     {
-        if (p.path().has_extension() && p.path().extension() == ".lua")
-        {
-            std::cout << p.path() << '\n';
+        auto run_parse = [p]() {
+            if (p.path().has_extension() && p.path().extension() == ".lua")
+            {
+                std::cout << p.path() << '\n';
 
-            try
-            {
-                parsefile(p.path().string());
+                try
+                {
+                    parsefile(p.path().string());
+                }
+                catch (std::exception e)
+                {
+                    std::cout << "got ex while parsing : " << e.what() << std::endl;
+                }
             }
-            catch (std::exception e)
-            {
-                std::cout << "got ex while parsing : " << e.what() << std::endl;
-            }
-        }
+        };
+        run_parse();
+    }
+    for (auto &t : threads_)
+    {
+        if (t.joinable())
+            t.join();
     }
 #else
     parsefile("test.lua");

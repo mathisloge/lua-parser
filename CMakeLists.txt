@@ -20,6 +20,7 @@ add_executable(LuaParser
     src/bucketer.cpp
     src/walker.cpp
     src/similarity.cpp
+    src/seq_builder.cpp
 )
 
 if(MSVC)

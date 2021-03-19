@@ -316,9 +316,9 @@ std::size_t Hasher::operator()(const numeral &value) const
 std::size_t Hasher::operator()(const Name &value) const
 {
     auto hash = std::hash<std::string>{}("Name");
-    if(false)
-     boost::hash_detail::hash_combine_impl(hash, std::hash<std::string>{}(value.name));
-     return hash;
+    if (false)
+        boost::hash_detail::hash_combine_impl(hash, std::hash<std::string>{}(value.name));
+    return hash;
 }
 std::size_t Hasher::operator()(const std::string &value) const
 {
@@ -326,10 +326,10 @@ std::size_t Hasher::operator()(const std::string &value) const
 }
 std::size_t Hasher::operator()(const double &value) const
 {
-     auto hash = std::hash<std::string>{}("double");
-     if(false)
-     boost::hash_detail::hash_combine_impl(hash, std::hash<double>{}(value));
-     return hash;
+    auto hash = std::hash<std::string>{}("double");
+    if (false)
+        boost::hash_detail::hash_combine_impl(hash, std::hash<double>{}(value));
+    return hash;
 }
 std::size_t Hasher::operator()(const unsigned &value) const
 {

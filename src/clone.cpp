@@ -2,12 +2,13 @@
 #include <algorithm>
 #include <iostream>
 #include <set>
+#include <boost/timer/timer.hpp>
 #include "bucketer.hpp"
 #include "hasher.hpp"
 #include "mass.hpp"
-#include "walker.hpp"
+#include "seq_builder.hpp"
 #include "similarity.hpp"
-#include <boost/timer/timer.hpp>
+#include "walker.hpp"
 namespace sre::lua::ast
 {
 
@@ -41,7 +42,7 @@ void Clone::run(const chunk &chunk)
     BucketList buckets;
     {
         cpu_timer timer_bucket;
-        Bucketer{buckets, 4}.toBuckets(chunk);
+        Bucketer{buckets, 6}.toBuckets(chunk);
         std::cout << "bucket duration: " << timer_bucket.format();
     }
 
@@ -134,17 +135,10 @@ void Clone::run(const chunk &chunk)
         std::vector<int> range(max_len);
         std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
 
-        auto genSubsequences = [](int k, const Clones &clones) {
-            std::vector<std::vector<Unit>> buckets;
-
-            std::vector<Unit> clone_pairs;
-            clone_pairs.reserve(k);
-
-            for (const auto &c : clones)
-            {}
-
-            return buckets;
-        };
+        const auto sequences = SeqBuilder{clones, min_len}(chunk).subsequences();
+        for(const auto& s : sequences) {
+            std::cout << s.size() << std::endl;
+        }
         for (auto k : range)
         {
             std::vector<Unit> clone_pairs;
