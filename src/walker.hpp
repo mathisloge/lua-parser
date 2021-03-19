@@ -14,6 +14,7 @@ class Walker final
     template <typename T, typename Tp>
     bool is(const T &val, Ccit &start, Ccit end)
     {
+        bool found = false;
         for (; start != end; start++)
         {
             // hier reicht ein simpler zeiger vergleich, da die Daten in diesen Schritten nicht kopiert werden.
@@ -31,13 +32,14 @@ class Walker final
                     // wir haben zwar einen guelitgen match fuer einen der beiden klone, jedoch nicht fuer beide.
                     if (pit == prev_clone_matches_.end())
                     {
-                        return false;
+                        continue;
                     }
                 }
-                return true;
+                found = true;
+                clone_matches_.push_back(*start);
             }
         }
-        return false;
+        return found;
     }
 
   public:

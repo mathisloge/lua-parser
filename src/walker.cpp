@@ -7,25 +7,12 @@ namespace sre::lua::ast
 #define IS(DBG_STR)                                                                                                    \
     using val_type = std::remove_cv<std::remove_reference<decltype(value)>::type>::type;                               \
     auto start_it = clones_.begin();                                                                                   \
-    if (is<val_type, const val_type *>(value, start_it, clones_.end()))                                                \
-    {                                                                                                                  \
-        clone_matches_.push_back(*start_it);                                                                           \
-        if (prev_clone_matches_.size() != 0)                                                                           \
-            return true;                                                                                               \
-    }
+    is<val_type, const val_type *>(value, start_it, clones_.end());
 
-#define LIST(var)                                                                                                      \
-    for (const auto &v : var)                                                                                          \
-        if ((*this)(v))                                                                                                \
-            return true;
+#define LIST(var) for (const auto &v : var){(*this)(v);}
 #define VISITR return boost::apply_visitor(*this, value);
-#define VISIT_COND(var)                                                                                                \
-    if (boost::apply_visitor(*this, var))                                                                              \
-        return true;
 #define F return false;
-#define R_COND(var)                                                                                                    \
-    if ((*this)(var))                                                                                                  \
-        return true;
+#define R_COND(var)  (*this)(var);
 #define R(var) return (*this)(var);
 
 Walker::Walker(const Clones &clones, const Clones &prevs)
@@ -150,7 +137,8 @@ bool Walker::operator()(const functioncall &value)
     IS("functioncall");
     R_COND(value.args_)
     if (value.name_.has_value())
-        R_COND(value.name_.value()) R(value.prefix_exp_)
+        R_COND(value.name_.value());
+    R(value.prefix_exp_)
 }
 bool Walker::operator()(const args &value)
 {

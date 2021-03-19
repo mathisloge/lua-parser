@@ -24,7 +24,6 @@ static bool isEqual(const double sim_threshold, const BucketItem &x, const Bucke
         // Daher pruefen wir hier nochmal explizit auf die aehnlichkeit.
         const auto sim = Similarity{}.run(std::get<2>(x), std::get<2>(y));
         return sim >= sim_threshold;
-        return true;
     }
     return false;
 }
