@@ -26,9 +26,9 @@ class Walker final
                 //! bekannten matchen.
                 if (prev_clone_matches_.size() > 0)
                 {
-                    auto pit = std::find_if(prev_clone_matches_.begin(), prev_clone_matches_.end(), [start](auto pit) {
-                        return *start == pit;
-                    });
+                    auto pit = std::find_if(prev_clone_matches_.begin(),
+                                            prev_clone_matches_.end(),
+                                            [start](const auto &x) { return (*start) == x; });
                     // wir haben zwar einen guelitgen match fuer einen der beiden klone, jedoch nicht fuer beide.
                     if (pit == prev_clone_matches_.end())
                     {

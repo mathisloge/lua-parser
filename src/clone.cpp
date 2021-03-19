@@ -61,19 +61,27 @@ void Clone::run(const chunk &chunk)
 
                 if (s_c.size() > 0)
                 {
-                    clones.erase(std::remove_if(clones.begin(),
-                                                clones.end(),
-                                                [&s_c](const auto &p) {
-                                                    return std::find(s_c.begin(), s_c.end(), p) != s_c.end();
-                                                }),
-                                 clones.end());
+                    for (const auto &subclone : s_c)
+                    {
+                        while (true)
+                        {
+                            auto f_it = std::find_if(clones.begin(), clones.end(), [&subclone](const auto &x) {
+                                return (subclone.first == x.first || subclone.first == x.second) &&
+                                       (subclone.second == x.first || subclone.second == x.second);
+                            });
+                            if (f_it != clones.end())
+                                clones.erase(f_it);
+                            else
+                                break;
+                        }
+                    }
                 }
-
                 clones.push_back(clone_pair);
             }
         }
     }
 
+    if (true)
     {
         Clones unique_clones;
         for (const auto &c : clones)
@@ -100,14 +108,11 @@ void Clone::run(const chunk &chunk)
     auto genSubsequences = [](int k, const Clones &clones) {
         std::vector<std::vector<Unit>> buckets;
 
-
         std::vector<Unit> clone_pairs;
         clone_pairs.reserve(k);
 
         for (const auto &c : clones)
-        {
-
-        }
+        {}
 
         return buckets;
     };

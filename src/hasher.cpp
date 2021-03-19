@@ -48,7 +48,9 @@ std::size_t Hasher::operator()(const stat &stat) const
 }
 std::size_t Hasher::operator()(const exp &exp) const
 {
-    return boost::apply_visitor(Hasher{}, exp);
+    auto hash = Hasher{}("exp");
+    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, exp));
+    return hash;
 }
 std::size_t Hasher::operator()(const explist &value) const
 {
@@ -72,19 +74,22 @@ std::size_t Hasher::operator()(const prefixexp &value) const
 }
 std::size_t Hasher::operator()(const expression &expression) const
 {
-    GET_EXP_RAW_HASH(hash, expression.first_)
+    auto hash = std::hash<std::string>{}("expression");
+    GET_EXP_HASH(hash, expression.first_)
     GET_EXP_HASH(hash, expression.rest_)
     return hash;
 }
 std::size_t Hasher::operator()(const primaryexpression &value) const
 {
-    GET_EXP_RAW_HASH(hash, value.first_)
+    auto hash = std::hash<std::string>{}("primaryexpression");
+    GET_EXP_HASH(hash, value.first_)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.rest_));
     return hash;
 }
 std::size_t Hasher::operator()(const assign_or_call &value) const
 {
-    auto hash = Hasher{}(value.primaryexp_);
+    auto hash = std::hash<std::string>{}("primaryexpression");
+    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.primaryexp_));
     boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value.var_action_));
     return hash;
 }
@@ -177,15 +182,20 @@ std::size_t Hasher::operator()(const functioncall &value) const
 }
 std::size_t Hasher::operator()(const args &value) const
 {
-    return boost::apply_visitor(Hasher{}, value);
+    auto hash = std::hash<std::string>{}("args");
+    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value));
+    return hash;
 }
 std::size_t Hasher::operator()(const var &value) const
 {
-    return boost::apply_visitor(Hasher{}, value);
+    auto hash = std::hash<std::string>{}("var");
+    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value));
+    return hash;
 }
 std::size_t Hasher::operator()(const var_wrapper &value) const
 {
-    GET_EXP_RAW_HASH(hash, value.var_)
+    auto hash = std::hash<std::string>{}("var_wrapper");
+    GET_EXP_HASH(hash, value.var_)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.next_));
     return hash;
 }
@@ -246,7 +256,8 @@ std::size_t Hasher::operator()(const attnamelist &value) const
 }
 std::size_t Hasher::operator()(const name_attrib_pair &value) const
 {
-    auto hash = Hasher{}(value.name_);
+    auto hash = std::hash<std::string>{}("name_attrib_pair");
+    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.name_));
     if (value.attrib_.has_value())
     {
         boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.attrib_.value()));
@@ -255,16 +266,17 @@ std::size_t Hasher::operator()(const name_attrib_pair &value) const
 }
 std::size_t Hasher::operator()(const ifelse &value) const
 {
-    auto hash_if = Hasher{}(value.first_);
+    auto hash = std::hash<std::string>{}("ifelse");
+    boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.first_));
     for (const auto &elif : value.rest_)
     {
-        boost::hash_detail::hash_combine_impl(hash_if, Hasher{}(elif));
+        boost::hash_detail::hash_combine_impl(hash, Hasher{}(elif));
     }
     if (value.else_.has_value())
     {
-        boost::hash_detail::hash_combine_impl(hash_if, Hasher{}(value.else_.value()));
+        boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.else_.value()));
     }
-    return hash_if;
+    return hash;
 }
 std::size_t Hasher::operator()(const ifelse_wrapper &value) const
 {
@@ -281,15 +293,17 @@ std::size_t Hasher::operator()(const goto_stmt &value) const
 }
 std::size_t Hasher::operator()(const unary &unary) const
 {
-    auto hash_op = std::hash<optoken>{}(unary.operator_);
-    GET_EXP_HASH(hash_op, unary.rhs_)
-    return hash_op;
+    auto hash = std::hash<std::string>{}("unary");
+    boost::hash_detail::hash_combine_impl(hash, std::hash<optoken>{}(unary.operator_));
+    GET_EXP_HASH(hash, unary.rhs_)
+    return hash;
 }
 std::size_t Hasher::operator()(const binary &bin) const
 {
-    auto hash_op = std::hash<optoken>{}(bin.operator_);
-    GET_EXP_HASH(hash_op, bin.rhs_)
-    return hash_op;
+    auto hash = std::hash<std::string>{}("binary");
+    boost::hash_detail::hash_combine_impl(hash, std::hash<optoken>{}(bin.operator_));
+    GET_EXP_HASH(hash, bin.rhs_)
+    return hash;
 }
 std::size_t Hasher::operator()(const keyword_stmt &value) const
 {

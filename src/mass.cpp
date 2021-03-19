@@ -21,7 +21,7 @@ std::size_t Mass::operator()(const stat &stat) const
 }
 std::size_t Mass::operator()(const exp &exp) const
 {
-    return boost::apply_visitor(Mass{}, exp);
+    return 1 + boost::apply_visitor(Mass{}, exp);
 }
 std::size_t Mass::operator()(const explist &value) const
 {
@@ -41,11 +41,11 @@ std::size_t Mass::operator()(const expression &expression) const
 }
 std::size_t Mass::operator()(const primaryexpression &value) const
 {
-    return (*this)(value.first_) + (*this)(value.rest_);
+    return 1+ (*this)(value.first_) + (*this)(value.rest_);
 }
 std::size_t Mass::operator()(const assign_or_call &value) const
 {
-    return (*this)(value.primaryexp_) + (*this)(value.var_action_);
+    return 1 + (*this)(value.primaryexp_) + (*this)(value.var_action_);
 }
 std::size_t Mass::operator()(const label &value) const
 {
@@ -114,7 +114,7 @@ std::size_t Mass::operator()(const var &value) const
 }
 std::size_t Mass::operator()(const var_wrapper &value) const
 {
-    return (*this)(value.var_) + (*this)(value.next_);
+    return 1+ (*this)(value.var_) + (*this)(value.next_);
 }
 std::size_t Mass::operator()(const varlist &value) const
 {
@@ -125,7 +125,7 @@ std::size_t Mass::operator()(const varlist &value) const
 }
 std::size_t Mass::operator()(const var_assign_or_list &value) const
 {
-    return boost::apply_visitor(Mass{}, value);
+    return 1 + boost::apply_visitor(Mass{}, value);
 }
 std::size_t Mass::operator()(const whiledo &value) const
 {
@@ -159,7 +159,7 @@ std::size_t Mass::operator()(const attnamelist &value) const
 }
 std::size_t Mass::operator()(const name_attrib_pair &value) const
 {
-    return (*this)(value.name_) + (value.attrib_.has_value() ? (*this)(value.attrib_.value()) : 0);
+    return 1 + (*this)(value.name_) + (value.attrib_.has_value() ? (*this)(value.attrib_.value()) : 0);
 }
 std::size_t Mass::operator()(const ifelse &value) const
 {
