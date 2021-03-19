@@ -1,6 +1,7 @@
 #include "similarity.hpp"
 #include "hasher.hpp"
 #include "mass.hpp"
+#include <iostream>
 
 //! wenn teilbaum x != teilbaum y ist => L+= Mass von (x) R += Mass von (y)
 namespace sre::lua::ast
@@ -10,9 +11,8 @@ namespace sre::lua::ast
     template <>                                                                                                        \
     void Similarity::operator()(const type &a, const type &b)                                                          \
     {                                                                                                                  \
-        if (Hasher{}(a) == Hasher{}(b))                                                                                \
-        {                                                                                                              \
-            S += 1;
+        S += 1;                                                                                                        
+
 #define op_call(acc) (*this)(a.##acc, b.##acc);
 #define op_call_opt(acc)                                                                                               \
     if (a.##acc.has_value() && b.##acc.has_value())                                                                    \
@@ -53,22 +53,7 @@ namespace sre::lua::ast
     }
 #define op_call_list(acc) op_call_list_var(a.##acc, b.##acc)
 
-#define op_end                                                                                                         \
-    }                                                                                                                  \
-    else                                                                                                               \
-    {                                                                                                                  \
-        L += Mass{}(a);                                                                                                \
-        R += Mass{}(b);                                                                                                \
-    }                                                                                                                  \
-    }
-
-template <class... Ts>
-struct overloaded : Ts...
-{
-    using Ts::operator()...;
-};
-template <class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
+#define op_end }
 
 Similarity::Similarity()
 {}
@@ -79,7 +64,11 @@ double Similarity::run(const Unit &a, const Unit &b)
     L = 0;
     S = 0;
     std::visit([this](auto a, auto b) { (*this)(*a, *b); }, a, b);
-    return 2. * S / (2. * S + L + R);
+
+    std::cout << S << " " << L <<" " << R << std::endl;
+    const double div = (2. * double(S)) + double(L) + double(R);
+    if(div > 0.) return (2. * double(S)) / div;
+    return 0.;
 }
 
 op_begin(stat);
@@ -175,9 +164,129 @@ op_call(block_);
 op_end;
 
 op_begin(functioncall);
-op_call_opt(name_)
+op_call_opt(name_);
 op_call(args_);
 op_call(prefix_exp_);
 op_end;
+
+op_begin(args);
+op_visit(a, b);
+op_end;
+
+op_begin(var);
+op_visit(a, b);
+op_end;
+
+op_begin(var_wrapper);
+op_call(var_);
+op_call(next_);
+op_end;
+
+op_begin(varlist);
+op_call_list(rest_);
+op_call(explist_);
+op_end;
+
+op_begin(var_assign_or_list);
+op_visit(a, b);
+op_end;
+
+op_begin(whiledo);
+op_call(exp_);
+op_call(block_);
+op_end;
+
+op_begin(repeatuntil);
+op_call(block_);
+op_call(exp_);
+op_end;
+
+op_begin(doblock);
+op_call(block_);
+op_end;
+
+op_begin(forexp);
+op_call(name_);
+op_call(exp_first_);
+op_call(exp_second_);
+op_call(exp_third_);
+op_call(block_);
+op_end;
+
+op_begin(local_attnamelist_assign);
+op_call(attnamelist_);
+op_call(explist_);
+op_end;
+
+op_begin(attnamelist);
+op_call(first_);
+op_call_list(rest_);
+op_end;
+
+op_begin(name_attrib_pair);
+op_call(name_);
+op_call_opt(attrib_);
+op_end;
+
+op_begin(ifelse);
+op_call(first_);
+op_call_list(rest_);
+op_call_opt(else_);
+op_end;
+
+op_begin(ifelse_wrapper);
+op_call(exp_);
+op_call(block_);
+op_end;
+
+op_begin(goto_stmt);
+op_call(name_);
+op_end;
+
+op_begin(unary);
+op_call(operator_);
+op_call(rhs_);
+op_end;
+
+op_begin(binary);
+op_call(operator_);
+op_call(rhs_);
+op_end;
+
+template <>
+void Similarity::operator()(const optoken &a, const optoken &b)
+{
+    if(a == b)
+        S+= 1;
+    else {
+        L += 1;
+        R += 1;
+    }
+}
+
+template <>
+void Similarity::operator()(const keyword_stmt &a, const keyword_stmt &b)
+{
+    if(a.keyword_ == b.keyword_)
+        S+= 1;
+    else {
+        L += 1;
+        R += 1;
+    }
+}
+
+op_begin(numeral);
+op_visit(a, b);
+op_end;
+
+op_begin(Name) op_end
+op_begin(std::string) op_end
+op_begin(double) op_end
+op_begin(unsigned) op_end
+op_begin(bool) op_end
+
+template <>
+void Similarity::operator()(const nil &a, const nil &b)
+{}
 
 } // namespace sre::lua::ast

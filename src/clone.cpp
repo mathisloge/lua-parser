@@ -6,6 +6,7 @@
 #include "hasher.hpp"
 #include "mass.hpp"
 #include "walker.hpp"
+#include "similarity.hpp"
 namespace sre::lua::ast
 {
 
@@ -13,9 +14,14 @@ bool operator<(const BucketItem &x, const BucketItem &y)
 {
     return std::get<0>(x) < std::get<0>(y);
 }
-static bool isEqual(const BucketItem &x, const BucketItem &y)
+static bool isEqual(const double sim_threshold, const BucketItem &x, const BucketItem &y)
 {
-    return std::get<1>(x) == std::get<1>(y);
+    if(std::get<1>(x) == std::get<1>(y)) {
+    const auto sim = Similarity{}.run(std::get<2>(x), std::get<2>(y));
+    std::cout << sim << std::endl;
+    return sim >= sim_threshold;
+    }
+    return false;
 }
 
 void Clone::addChunk(chunk &&chunkt)
@@ -41,7 +47,7 @@ void Clone::run(const chunk &chunk)
             if (bit == it)
                 continue;
 
-            if (isEqual(*bit, *it))
+            if (isEqual(0.5, *bit, *it))
             {
                 auto clone_pair = std::make_pair(std::get<2>(*bit), std::get<2>(*it));
                 auto f_c = std::visit(

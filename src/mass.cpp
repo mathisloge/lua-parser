@@ -36,12 +36,11 @@ std::size_t Mass::operator()(const prefixexp &value) const
 }
 std::size_t Mass::operator()(const expression &expression) const
 {
-    const std::size_t x = (*this)(expression.first_);
-    return x + (*this)(expression.rest_);
+    return 1 + (*this)(expression.first_) + (*this)(expression.rest_);
 }
 std::size_t Mass::operator()(const primaryexpression &value) const
 {
-    return 1+ (*this)(value.first_) + (*this)(value.rest_);
+    return 1 + (*this)(value.first_) + (*this)(value.rest_);
 }
 std::size_t Mass::operator()(const assign_or_call &value) const
 {
@@ -114,7 +113,7 @@ std::size_t Mass::operator()(const var &value) const
 }
 std::size_t Mass::operator()(const var_wrapper &value) const
 {
-    return 1+ (*this)(value.var_) + (*this)(value.next_);
+    return 1 + (*this)(value.var_) + (*this)(value.next_);
 }
 std::size_t Mass::operator()(const varlist &value) const
 {

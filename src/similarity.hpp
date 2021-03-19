@@ -2,6 +2,7 @@
 #include <iostream>
 #include "bucketer.hpp"
 #include "types.hpp"
+#include "mass.hpp"
 namespace sre::lua::ast
 {
 class Similarity final : public boost::static_visitor<>
@@ -9,10 +10,16 @@ class Similarity final : public boost::static_visitor<>
   public:
     Similarity();
     double run(const Unit &a, const Unit &b);
+
+    // simple forward declaration since we need to use templates in this case..
+    template <typename Ta>
+    void operator()(const x3::forward_ast<Ta> &a, const x3::forward_ast<Ta> &b) { (*this)(a.get(), b.get()); }
+
     template <typename Ta, typename Tb>
     void operator()(const Ta &x, const Tb &y)
     {
-        std::cout << "called default arg. hashes matches but types don't!" << std::endl;
+        L += Mass{}(x);                                                                                                
+        R += Mass{}(y); 
     }
     template <>
     void operator()(const stat &a, const stat &b);
@@ -91,6 +98,8 @@ class Similarity final : public boost::static_visitor<>
     template <>
     void operator()(const binary &a, const binary &b);
     template <>
+    void operator()(const optoken &a, const optoken &b);
+    template <>
     void operator()(const keyword_stmt &a, const keyword_stmt &b);
     template <>
     void operator()(const numeral &a, const numeral &b);
@@ -106,7 +115,6 @@ class Similarity final : public boost::static_visitor<>
     void operator()(const bool &a, const bool &b);
     template <>
     void operator()(const nil &a, const nil &b);
-
   private:
     MassVal S;
     MassVal L;
