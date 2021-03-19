@@ -7,6 +7,7 @@
 #include "mass.hpp"
 #include "walker.hpp"
 #include "similarity.hpp"
+#include <boost/timer/timer.hpp>
 namespace sre::lua::ast
 {
 
@@ -16,10 +17,14 @@ bool operator<(const BucketItem &x, const BucketItem &y)
 }
 static bool isEqual(const double sim_threshold, const BucketItem &x, const BucketItem &y)
 {
-    if(std::get<1>(x) == std::get<1>(y)) {
-    const auto sim = Similarity{}.run(std::get<2>(x), std::get<2>(y));
-    std::cout << sim << std::endl;
-    return sim >= sim_threshold;
+    if (std::get<1>(x) == std::get<1>(y))
+    {
+        // im normalfall sollte ein gleicher hash auch die gleiche strukturelle gleichheit bringen.
+        // da die hashes aber viel kombiniert werden muessen, kann es bei tiefer rekursion eher zu kollisionen kommen.
+        // Daher pruefen wir hier nochmal explizit auf die aehnlichkeit.
+        const auto sim = Similarity{}.run(std::get<2>(x), std::get<2>(y));
+        return sim >= sim_threshold;
+        return true;
     }
     return false;
 }
@@ -30,65 +35,83 @@ void Clone::addChunk(chunk &&chunkt)
 }
 void Clone::run(const chunk &chunk)
 {
-    BucketList buckets;
-    Bucketer{buckets, 4}.toBuckets(chunk);
+    using namespace boost::timer;
 
-    std::cout << "bucket size: " << buckets.size() << std::endl;
+    cpu_timer timer_complete;
+
+    BucketList buckets;
+    {
+        cpu_timer timer_bucket;
+        Bucketer{buckets, 4}.toBuckets(chunk);
+        std::cout << "bucket duration: " << timer_bucket.format();
+    }
+
+    std::cout << "buckets: " << buckets.size() << std::endl;
     if (buckets.size() < 2)
         return;
-
-    std::sort(buckets.begin(), buckets.end());
+    {
+        cpu_timer timer_sort;
+        std::sort(buckets.begin(), buckets.end());
+        std::cout << "bucket sort duration: " << timer_sort.format();
+    }
 
     Clones clones;
-    for (auto bit = buckets.begin(); bit != buckets.end(); bit++)
+
     {
-        for (auto it = buckets.begin(); it != buckets.end(); it++)
+        cpu_timer timer_clones_step1;
+        for (auto bit = buckets.begin(); bit != buckets.end(); bit++)
         {
-            if (bit == it)
-                continue;
-
-            if (isEqual(0.5, *bit, *it))
+            for (auto it = buckets.begin(); it != buckets.end(); it++)
             {
-                auto clone_pair = std::make_pair(std::get<2>(*bit), std::get<2>(*it));
-                auto f_c = std::visit(
-                    [&clones](const auto u) {
-                        Walker w{clones};
-                        w(*u);
-                        return w.clones();
-                    },
-                    clone_pair.first);
-                auto s_c = std::visit(
-                    [&clones, &f_c](const auto u) {
-                        Walker w{clones, f_c};
-                        w(*u);
-                        return w.clones();
-                    },
-                    clone_pair.second);
+                if (bit == it)
+                    continue;
 
-                if (s_c.size() > 0)
+                if (isEqual(1.0, *bit, *it))
                 {
-                    for (const auto &subclone : s_c)
+                    auto clone_pair = std::make_pair(std::get<2>(*bit), std::get<2>(*it));
+
+                    auto f_c = std::visit(
+                        [&clones](const auto u) {
+                            Walker w{clones};
+                            w(*u);
+                            return w.clones();
+                        },
+                        clone_pair.first);
+                    auto s_c = std::visit(
+                        [&clones, &f_c](const auto u) {
+                            Walker w{clones, f_c};
+                            w(*u);
+                            return w.clones();
+                        },
+                        clone_pair.second);
+
+                    if (s_c.size() > 0)
                     {
-                        while (true)
+                        for (const auto &subclone : s_c)
                         {
-                            auto f_it = std::find_if(clones.begin(), clones.end(), [&subclone](const auto &x) {
-                                return (subclone.first == x.first || subclone.first == x.second) &&
-                                       (subclone.second == x.first || subclone.second == x.second);
-                            });
-                            if (f_it != clones.end())
-                                clones.erase(f_it);
-                            else
-                                break;
+                            while (true)
+                            {
+                                auto f_it = std::find_if(clones.begin(), clones.end(), [&subclone](const auto &x) {
+                                    return (subclone.first == x.first || subclone.first == x.second) &&
+                                           (subclone.second == x.first || subclone.second == x.second);
+                                });
+                                if (f_it != clones.end())
+                                    clones.erase(f_it);
+                                else
+                                    break;
+                            }
                         }
                     }
+                    clones.push_back(clone_pair);
                 }
-                clones.push_back(clone_pair);
             }
         }
+        std::cout << "Duration step1: " << timer_clones_step1.format();
     }
 
     if (true)
     {
+        cpu_timer timer_clones_dups;
         Clones unique_clones;
         for (const auto &c : clones)
         {
@@ -101,42 +124,39 @@ void Clone::run(const chunk &chunk)
             }
         }
         clones = unique_clones;
+        std::cout << "removing duplicates: " << timer_clones_dups.format();
     }
 
-    std::cout << "Clones: " << clones.size() << std::endl;
-
-    std::cout << "========= STEP2 ===========" << std::endl;
-    const int min_len = 2;
-    const int max_len = 6;
-    std::vector<int> range(max_len);
-    std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
-
-    auto genSubsequences = [](int k, const Clones &clones) {
-        std::vector<std::vector<Unit>> buckets;
-
-        std::vector<Unit> clone_pairs;
-        clone_pairs.reserve(k);
-
-        for (const auto &c : clones)
-        {}
-
-        return buckets;
-    };
-    for (auto k : range)
+    std::cout << "unique clones after step1: " << clones.size() << std::endl;
     {
-        std::vector<Unit> clone_pairs;
+        cpu_timer timer_clones_step2;
+        const int min_len = 2;
+        const int max_len = 6;
+        std::vector<int> range(max_len);
+        std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
 
-        clone_pairs.reserve(k);
+        auto genSubsequences = [](int k, const Clones &clones) {
+            std::vector<std::vector<Unit>> buckets;
+
+            std::vector<Unit> clone_pairs;
+            clone_pairs.reserve(k);
+
+            for (const auto &c : clones)
+            {}
+
+            return buckets;
+        };
+        for (auto k : range)
+        {
+            std::vector<Unit> clone_pairs;
+
+            clone_pairs.reserve(k);
+        }
+        std::cout << "Duration step2: " << timer_clones_step2.format();
     }
-
     clones_ = clones;
 
-#if 0
-    std::cout << "============" << std::endl;
-    do
-        std::cout << "cmp hash " << std::get<1>(buckets[0]) << " == " << std::get<1>(buckets[1]) << std::endl;
-    while (std::next_permutation(buckets.begin(), buckets.end()));
-#endif
+    std::cout << "Detection duration: " << timer_complete.format();
 }
 
 const Clones &Clone::clones() const

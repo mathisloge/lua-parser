@@ -10,6 +10,8 @@ namespace sre::lua::ast
     if (is<val_type, const val_type *>(value, start_it, clones_.end()))                                                \
     {                                                                                                                  \
         clone_matches_.push_back(*start_it);                                                                           \
+        if (prev_clone_matches_.size() != 0)                                                                           \
+            return true;                                                                                               \
     }
 
 #define LIST(var)                                                                                                      \

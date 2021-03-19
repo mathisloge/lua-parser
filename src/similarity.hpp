@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include "bucketer.hpp"
-#include "types.hpp"
 #include "mass.hpp"
+#include "types.hpp"
 namespace sre::lua::ast
 {
 class Similarity final : public boost::static_visitor<>
@@ -13,13 +13,16 @@ class Similarity final : public boost::static_visitor<>
 
     // simple forward declaration since we need to use templates in this case..
     template <typename Ta>
-    void operator()(const x3::forward_ast<Ta> &a, const x3::forward_ast<Ta> &b) { (*this)(a.get(), b.get()); }
+    void operator()(const x3::forward_ast<Ta> &a, const x3::forward_ast<Ta> &b)
+    {
+        (*this)(a.get(), b.get());
+    }
 
     template <typename Ta, typename Tb>
     void operator()(const Ta &x, const Tb &y)
     {
-        L += Mass{}(x);                                                                                                
-        R += Mass{}(y); 
+        L += Mass{}(x);
+        R += Mass{}(y);
     }
     template <>
     void operator()(const stat &a, const stat &b);
@@ -115,6 +118,7 @@ class Similarity final : public boost::static_visitor<>
     void operator()(const bool &a, const bool &b);
     template <>
     void operator()(const nil &a, const nil &b);
+
   private:
     MassVal S;
     MassVal L;

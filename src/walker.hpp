@@ -14,7 +14,6 @@ class Walker final
     template <typename T, typename Tp>
     bool is(const T &val, Ccit &start, Ccit end)
     {
-
         for (; start != end; start++)
         {
             // hier reicht ein simpler zeiger vergleich, da die Daten in diesen Schritten nicht kopiert werden.

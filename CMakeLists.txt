@@ -5,7 +5,7 @@ project(LuaParser
         HOMEPAGE_URL https://github.com/mathisloge/lua-parser
         LANGUAGES CXX)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS timer)
 
 
 add_subdirectory(parser_lib)
@@ -30,5 +30,6 @@ set_property(TARGET LuaParser PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(LuaParser PRIVATE
     Boost::headers
+    Boost::timer
     lua-parser-lib
 )

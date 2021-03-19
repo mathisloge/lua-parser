@@ -1,7 +1,7 @@
 #include "similarity.hpp"
+#include <iostream>
 #include "hasher.hpp"
 #include "mass.hpp"
-#include <iostream>
 
 //! wenn teilbaum x != teilbaum y ist => L+= Mass von (x) R += Mass von (y)
 namespace sre::lua::ast
@@ -11,7 +11,7 @@ namespace sre::lua::ast
     template <>                                                                                                        \
     void Similarity::operator()(const type &a, const type &b)                                                          \
     {                                                                                                                  \
-        S += 1;                                                                                                        
+        S += 1;
 
 #define op_call(acc) (*this)(a.##acc, b.##acc);
 #define op_call_opt(acc)                                                                                               \
@@ -64,10 +64,9 @@ double Similarity::run(const Unit &a, const Unit &b)
     L = 0;
     S = 0;
     std::visit([this](auto a, auto b) { (*this)(*a, *b); }, a, b);
-
-    std::cout << S << " " << L <<" " << R << std::endl;
     const double div = (2. * double(S)) + double(L) + double(R);
-    if(div > 0.) return (2. * double(S)) / div;
+    if (div > 0.)
+        return (2. * double(S)) / div;
     return 0.;
 }
 
@@ -256,9 +255,10 @@ op_end;
 template <>
 void Similarity::operator()(const optoken &a, const optoken &b)
 {
-    if(a == b)
-        S+= 1;
-    else {
+    if (a == b)
+        S += 1;
+    else
+    {
         L += 1;
         R += 1;
     }
@@ -267,9 +267,10 @@ void Similarity::operator()(const optoken &a, const optoken &b)
 template <>
 void Similarity::operator()(const keyword_stmt &a, const keyword_stmt &b)
 {
-    if(a.keyword_ == b.keyword_)
-        S+= 1;
-    else {
+    if (a.keyword_ == b.keyword_)
+        S += 1;
+    else
+    {
         L += 1;
         R += 1;
     }
@@ -279,14 +280,11 @@ op_begin(numeral);
 op_visit(a, b);
 op_end;
 
-op_begin(Name) op_end
-op_begin(std::string) op_end
-op_begin(double) op_end
-op_begin(unsigned) op_end
-op_begin(bool) op_end
+op_begin(Name) op_end op_begin(std::string) op_end op_begin(double) op_end op_begin(unsigned) op_end
+    op_begin(bool) op_end
 
-template <>
-void Similarity::operator()(const nil &a, const nil &b)
+    template <>
+    void Similarity::operator()(const nil &a, const nil &b)
 {}
 
 } // namespace sre::lua::ast
