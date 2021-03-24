@@ -230,7 +230,7 @@ bool Walker::operator()(const ifelse_wrapper &value)
 bool Walker::operator()(const goto_stmt &value)
 {
     IS("goto_stmt");
-    R(value)
+    R(value.name_)
 }
 bool Walker::operator()(const unary &value)
 {
