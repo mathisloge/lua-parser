@@ -7,42 +7,70 @@
 #include "ast/dot_printer.hpp"
 #include "ast/printer.hpp"
 #include "clone.hpp"
+#include "cxxopts.hpp"
 #include "hasher.hpp"
 #include "parser.hpp"
 namespace fs = std::filesystem;
 
 int parsefile(const std::string &file);
-int main()
+int main(int argc, char **argv)
 {
-#if 1
-    std::vector<std::thread> threads_;
-    for (auto &p : fs::recursive_directory_iterator("testdir"))
+    cxxopts::Options options(argv[0], "Lua Typ-1 und Typ-2 Klonerkennung nach Baxter");
+    // clang-format off
+    options.add_options()
+        ("p,path", "Datei oder Ordner die zu puefen sind", cxxopts::value<std::string>()->default_value("testdir"))
+        ("e,extension", "Falls die Extension der Lua-Datein innerhalb eines Ordners anders sein sollten", cxxopts::value<std::string>()->default_value(".lua"))
+        ("h,help", "Print help");
+    // clang-format on
+    auto result = options.parse(argc, argv);
+    if (result.count("help"))
     {
-        auto run_parse = [p]() {
-            if (p.path().has_extension() && p.path().extension() == ".lua")
-            {
-                std::cout << p.path() << '\n';
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
 
-                try
-                {
-                    parsefile(p.path().string());
-                }
-                catch (std::exception e)
-                {
-                    std::cout << "got ex while parsing : " << e.what() << std::endl;
-                }
-            }
-        };
-        run_parse();
-    }
-    for (auto &t : threads_)
+    const std::filesystem::path parse_path{result["path"].as<std::string>()};
+    if (!std::filesystem::exists(parse_path))
     {
-        if (t.joinable())
-            t.join();
+        std::cout << "Der angegebene Pfad existiert nicht. Absolut: " << std::filesystem::absolute(parse_path)
+                  << std::endl;
+        std::cout << options.help() << std::endl;
+        exit(-1);
     }
-#else
-    parsefile("test.lua");
-#endif
+    if (std::filesystem::is_regular_file(parse_path))
+    {
+        parsefile(parse_path.string());
+    }
+    else
+    {
+        const std::string extension{result["extension"].as<std::string>()};
+        std::cout << "using extension: " << extension << std::endl;
+        std::vector<std::thread> threads_;
+        for (auto &p : fs::recursive_directory_iterator(parse_path))
+        {
+            auto run_parse = [&extension, p]() {
+                if (p.path().has_extension() && p.path().extension() == extension)
+                {
+                    std::cout << p.path() << '\n';
+
+                    try
+                    {
+                        parsefile(p.path().string());
+                    }
+                    catch (std::exception e)
+                    {
+                        std::cout << "got ex while parsing : " << e.what() << std::endl;
+                    }
+                }
+            };
+            run_parse();
+        }
+        for (auto &t : threads_)
+        {
+            if (t.joinable())
+                t.join();
+        }
+    }
 }
 int parsefile(const std::string &file)
 {
