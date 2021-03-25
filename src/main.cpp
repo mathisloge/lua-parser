@@ -20,6 +20,7 @@ int main(int argc, char **argv)
     options.add_options()
         ("p,path", "Datei oder Ordner die zu puefen sind", cxxopts::value<std::string>()->default_value("testdir"))
         ("e,extension", "Falls die Extension der Lua-Datein innerhalb eines Ordners anders sein sollten", cxxopts::value<std::string>()->default_value(".lua"))
+        ("t,typ", "Typ 1 oder 2", cxxopts::value<int>()->default_value("2"))
         ("h,help", "Print help");
     // clang-format on
     auto result = options.parse(argc, argv);
@@ -91,7 +92,7 @@ int parsefile(const std::string &file)
 
         sre::lua::ast::Clone cloner;
         cloner.run(chunk);
-        sre::lua::ast::DotPrinter printer{ofs, cloner.clones()};
+        sre::lua::ast::DotPrinter printer{ofs, cloner.clones(), cloner.sequence_clones()};
         printer(chunk);
     }
     else

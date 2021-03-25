@@ -1,4 +1,5 @@
 #pragma once
+#include <set>
 #include <tuple>
 #include <variant>
 #include <vector>
@@ -55,4 +56,8 @@ using ClonePair = std::pair<Unit, Unit>;
 using Clones = std::vector<ClonePair>;
 using Cit = Clones::iterator;
 using Ccit = Clones::const_iterator;
+
+using SeqItem = std::pair<Unit, HashVal>;
+using Sequence = std::set<SeqItem>;
+using AllSequences = std::vector<Sequence>;
 } // namespace sre::lua::ast

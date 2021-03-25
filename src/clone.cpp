@@ -1,7 +1,9 @@
 #include "clone.hpp"
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <set>
+#include <boost/container_hash/hash.hpp>
 #include <boost/timer/timer.hpp>
 #include "bucketer.hpp"
 #include "hasher.hpp"
@@ -22,7 +24,7 @@ static bool isEqual(const double sim_threshold, const BucketItem &x, const Bucke
     {
         // im normalfall sollte ein gleicher hash auch die gleiche strukturelle gleichheit bringen.
         // da die hashes aber viel kombiniert werden muessen, kann es bei tiefer rekursion eher zu kollisionen kommen.
-        // Daher pruefen wir hier nochmal explizit auf die aehnlichkeit.
+        // Daher pruefen wir hier nochmal explizit auf die gleichheit.
         const auto sim = Similarity{}.run(std::get<2>(x), std::get<2>(y));
         return sim >= sim_threshold;
     }
@@ -128,26 +130,89 @@ void Clone::run(const chunk &chunk)
     }
 
     std::cout << "unique clones after step1: " << clones.size() << std::endl;
+    std::multimap<int, Sequence> sequence_clones_;
     {
         cpu_timer timer_clones_step2;
         const int min_len = 2;
-        const int max_len = 6;
-        std::vector<int> range(max_len);
+        const int max_len = 9;
+        std::vector<int> range(max_len - 1);
         std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
 
+        // Build the list structures describing sequences
         const auto sequences = SeqBuilder{clones, min_len}(chunk).subsequences();
-        for(const auto& s : sequences) {
-            std::cout << s.size() << std::endl;
+        for (const auto &s : sequences)
+        {
+            std::cout << "S: " << s.size() << std::endl;
         }
+        // For k = MinimumSequenceLengthThreshold to MaximumSequenceLength
         for (auto k : range)
         {
-            std::vector<Unit> clone_pairs;
+            std::multimap<HashVal, Sequence> seq_bucket;
+            // BEGIN Place all subsequences of length k into buckets according to subsequence hash
+            for (const auto &s : sequences)
+            {
+                if (s.size() < k)
+                    continue;
+                for (auto it = std::next(s.begin(), k - 1); it != s.end(); it++)
+                {
+                    Sequence subseq;
+                    subseq.insert(*it);
+                    std::size_t sub_seq_hash = it->second;
+                    for (auto pit = std::prev(it, k - 1); pit != it; pit++)
+                    {
+                        boost::hash_detail::hash_combine_impl(sub_seq_hash, pit->second);
+                        subseq.insert(*pit);
+                    }
+                    seq_bucket.emplace(sub_seq_hash, subseq);
+                    std::cout << "subseq: " << subseq.size() << " hash: " << sub_seq_hash << std::endl;
+                }
+            }
+            if (seq_bucket.size() == 0)
+                continue;
+            // END Place all subsequences of length k into buckets according to subsequence hash
+            std::cout << "seq_bucket: " << seq_bucket.size() << std::endl;
 
-            clone_pairs.reserve(k);
+            // BEGIN For each subsequence i and j in same bucket If CompareSequences (i,j,k) > SimilarityThreshold
+            for (const auto bucket : seq_bucket)
+            {
+                Sequence bucket_same_seq;
+                for (auto i = bucket.second.begin(); i != bucket.second.end(); i++)
+                {
+                    for (auto j = bucket.second.begin(); j != bucket.second.end(); j++)
+                    {
+                        if (i == j)
+                            continue;
+
+                        // eigentlich muesste hier wieder ein vergleich ueber die Similarity{} gemacht werden.
+                        // Allerdings unterstuetzt dies nur einen vergleich von zwei klonpaaren und nicht von klonen
+                        // beliebiger laenge. Eine nicht effinziente moeglichkeit waere, die Sequenzen i und j in paare
+                        // zu unterteilen und fuer jedes moegliche paar die Similarity{} aufzurufen. Dies wuerde
+                        // allerdings bei großen laengen zu langen laufzeiten fuehren.
+                        if (i->second == j->second)
+                        {
+
+                            clones.erase(std::remove_if(clones.begin(),
+                                                        clones.end(),
+                                                        [i, j](const ClonePair &c) {
+                                                            return (c.first == i->first || c.second == i->first) &&
+                                                                   (c.first == j->first || c.second == j->first);
+                                                        }),
+                                         clones.end());
+
+                            bucket_same_seq.insert(*i);
+                            bucket_same_seq.insert(*j);
+                        }
+                    }
+                }
+                sequence_clones_.emplace(k, bucket_same_seq);
+            }
+            // END For each subsequence i and j in same bucket If CompareSequences (i,j,k) > SimilarityThreshold
         }
         std::cout << "Duration step2: " << timer_clones_step2.format();
     }
     clones_ = clones;
+
+    std::cout << "clones step 2: " << sequence_clones_.size() << " " << sequence_clones_.rbegin()->second.size() << std::endl;
 
     std::cout << "Detection duration: " << timer_complete.format();
 }
@@ -155,5 +220,10 @@ void Clone::run(const chunk &chunk)
 const Clones &Clone::clones() const
 {
     return clones_;
+}
+
+const std::multimap<int, Sequence> &Clone::sequence_clones() const
+{
+    return sequence_clones_;
 }
 } // namespace sre::lua::ast

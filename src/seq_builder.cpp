@@ -1,10 +1,11 @@
 #include "seq_builder.hpp"
 #include <iostream>
+#include "hasher.hpp"
 namespace sre::lua::ast
 {
 
 #define check_list(var)                                                                                                \
-    std::vector<ClonePair> subseq;                                                                                     \
+    Sequence subseq;                                                                                                   \
     for (const auto &c : clones_)                                                                                      \
     {                                                                                                                  \
         if (c.first.index() != c.second.index())                                                                       \
@@ -33,7 +34,10 @@ namespace sre::lua::ast
         }                                                                                                              \
         if (clone_found.first && clone_found.second)                                                                   \
         {                                                                                                              \
-            subseq.push_back(c);                                                                                       \
+            subseq.insert(std::pair<Unit, HashVal>{                                                                    \
+                c.first, std::visit([](auto y) -> std::size_t { return Hasher{}(*y); }, c.first)});                    \
+            subseq.insert(std::pair<Unit, HashVal>{                                                                    \
+                c.second, std::visit([](auto y) -> std::size_t { return Hasher{}(*y); }, c.second)});                  \
         }                                                                                                              \
     }                                                                                                                  \
     if (subseq.size() > min_seq_len_)                                                                                  \
@@ -51,22 +55,18 @@ SeqBuilder::SeqBuilder(const Clones &clones, size_t min_seq_len)
     , min_seq_len_{min_seq_len}
 {}
 
-const std::vector<std::vector<ClonePair>> &SeqBuilder::subsequences() const
+const AllSequences &SeqBuilder::subsequences() const
 {
     return clone_seq_;
 }
 
-SeqBuilder& SeqBuilder::operator()(const chunk &ast)
+SeqBuilder &SeqBuilder::operator()(const chunk &ast)
 {
     call(ast.block_);
     return *this;
 }
 void SeqBuilder::operator()(const block &block)
 {
-    for (const auto &s : block.stat_)
-    {
-        // using val_type = std::remove_cv<std::remove_reference<decltype(s)>::type>::type;
-    }
     check_list(block.stat_);
     call_list(block.stat_);
     call(block.retstat_);
@@ -126,8 +126,7 @@ void SeqBuilder::operator()(const local_function &value)
     call(value.funcbody_);
 }
 void SeqBuilder::operator()(const namelist &value)
-{
-}
+{}
 void SeqBuilder::operator()(const functiondef &value)
 {
     call(value.funcbody_);

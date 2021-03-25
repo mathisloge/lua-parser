@@ -90,7 +90,7 @@ std::size_t Hasher::operator()(const assign_or_call &value) const
 {
     auto hash = std::hash<std::string>{}("primaryexpression");
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.primaryexp_));
-    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value.var_action_));
+    GET_EXP_HASH(hash, value.var_action_);
     return hash;
 }
 std::size_t Hasher::operator()(const label &value) const
@@ -205,6 +205,13 @@ std::size_t Hasher::operator()(const varlist &value) const
     for (const auto &var : value.rest_)
         GET_EXP_HASH(hash, var)
     boost::hash_detail::hash_combine_impl(hash, Hasher{}(value.explist_));
+    return hash;
+}
+
+std::size_t Hasher::operator()(const var_assign_or_list &value) const
+{
+    auto hash = std::hash<std::string>{}("var_assign_or_list");
+    boost::hash_detail::hash_combine_impl(hash, boost::apply_visitor(Hasher{}, value));
     return hash;
 }
 std::size_t Hasher::operator()(const whiledo &value) const

@@ -29,6 +29,7 @@ struct Hasher
     std::size_t operator()(const args &value) const;
     std::size_t operator()(const var &value) const;
     std::size_t operator()(const var_wrapper &value) const;
+    std::size_t operator()(const var_assign_or_list &value) const;
     std::size_t operator()(const varlist &value) const;
     std::size_t operator()(const whiledo &value) const;
     std::size_t operator()(const repeatuntil &value) const;

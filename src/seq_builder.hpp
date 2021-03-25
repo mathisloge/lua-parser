@@ -1,17 +1,20 @@
 #pragma once
+#include <set>
 #include "ast/ast.hpp"
 #include "types.hpp"
 namespace sre::lua::ast
 {
 class SeqBuilder
 {
+
+  private:
     const Clones &clones_;
     size_t min_seq_len_;
-    std::vector<std::vector<ClonePair>> clone_seq_;
+    AllSequences clone_seq_;
 
   public:
     explicit SeqBuilder(const Clones &clones, size_t min_seq_len);
-    const std::vector<std::vector<ClonePair>> &subsequences() const;
+    const AllSequences &subsequences() const;
     //! \returns SeqBuilder& for self chain
     SeqBuilder &operator()(const chunk &ast);
     void operator()(const block &block);
