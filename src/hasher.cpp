@@ -1,6 +1,7 @@
 #include "hasher.hpp"
 #include <functional>
 #include <boost/container_hash/hash.hpp>
+#include "runtime_config.hpp"
 namespace sre::lua::ast
 {
 struct nil_exception : std::exception
@@ -323,28 +324,37 @@ std::size_t Hasher::operator()(const numeral &value) const
 std::size_t Hasher::operator()(const Name &value) const
 {
     auto hash = std::hash<std::string>{}("Name");
-    if (false)
+    if (RuntimeConfig::clone_type == RuntimeConfig::CloneType::type1)
         boost::hash_detail::hash_combine_impl(hash, std::hash<std::string>{}(value.name));
     return hash;
 }
 std::size_t Hasher::operator()(const std::string &value) const
 {
-    return std::hash<std::string>{}("string");
+    auto hash = std::hash<std::string>{}("string");
+    if (RuntimeConfig::clone_type == RuntimeConfig::CloneType::type1)
+        boost::hash_detail::hash_combine_impl(hash, std::hash<std::string>{}(value));
+    return hash;
 }
 std::size_t Hasher::operator()(const double &value) const
 {
     auto hash = std::hash<std::string>{}("double");
-    if (false)
+    if (RuntimeConfig::clone_type == RuntimeConfig::CloneType::type1)
         boost::hash_detail::hash_combine_impl(hash, std::hash<double>{}(value));
     return hash;
 }
 std::size_t Hasher::operator()(const unsigned &value) const
 {
-    return std::hash<std::string>{}("unsigned");
+    auto hash = std::hash<std::string>{}("unsigned");
+    if (RuntimeConfig::clone_type == RuntimeConfig::CloneType::type1)
+        boost::hash_detail::hash_combine_impl(hash, std::hash<unsigned>{}(value));
+    return hash;
 }
 std::size_t Hasher::operator()(const bool &value) const
 {
-    return std::hash<std::string>{}("bool");
+    auto hash = std::hash<std::string>{}("bool");
+    if (RuntimeConfig::clone_type == RuntimeConfig::CloneType::type1)
+        boost::hash_detail::hash_combine_impl(hash, std::hash<bool>{}(value));
+    return hash;
 }
 std::size_t Hasher::operator()(const nil &nil) const
 {

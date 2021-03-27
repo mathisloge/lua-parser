@@ -10,6 +10,7 @@
 #include "cxxopts.hpp"
 #include "hasher.hpp"
 #include "parser.hpp"
+#include "runtime_config.hpp"
 namespace fs = std::filesystem;
 
 int parsefile(const std::string &file);
@@ -20,7 +21,7 @@ int main(int argc, char **argv)
     options.add_options()
         ("p,path", "Datei oder Ordner die zu puefen sind", cxxopts::value<std::string>()->default_value("testdir"))
         ("e,extension", "Falls die Extension der Lua-Datein innerhalb eines Ordners anders sein sollten", cxxopts::value<std::string>()->default_value(".lua"))
-        ("t,typ", "Typ 1 oder 2", cxxopts::value<int>()->default_value("2"))
+        ("t,type", "Typ 1 oder 2", cxxopts::value<int>()->default_value("2"))
         ("h,help", "Print help");
     // clang-format on
     auto result = options.parse(argc, argv);
@@ -28,6 +29,17 @@ int main(int argc, char **argv)
     {
         std::cout << options.help() << std::endl;
         exit(0);
+    }
+
+    if (result["type"].as<int>() == 1)
+    {
+        RuntimeConfig::clone_type = RuntimeConfig::CloneType::type1;
+        std::cout << "Detecting type 1 clones" << std::endl;
+    }
+    else
+    {
+        RuntimeConfig::clone_type = RuntimeConfig::CloneType::type2;
+        std::cout << "Detecting type 2 clones" << std::endl;
     }
 
     const std::filesystem::path parse_path{result["path"].as<std::string>()};

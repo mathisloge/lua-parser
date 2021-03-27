@@ -13,7 +13,7 @@ namespace sre::lua::ast
     auto start_it = clones_.begin();                                                                                   \
     is<val_type, const val_type *>(var, start_it, clones_.end(), id);
 
-DotPrinter::DotPrinter(std::ostream &out, const Clones &clones, const std::map<int, Sequence> &sequences)
+DotPrinter::DotPrinter(std::ostream &out, const Clones &clones, const std::multimap<int, Sequence> &sequences)
     : out_{out}
     , clones_{clones}
     , sequences_{sequences}
@@ -53,7 +53,8 @@ void DotPrinter::printClones()
 void DotPrinter::printSeqClones()
 {
     std::cout << " seq: seqclones_processed_: " << seqclones_processed_.size() << std::endl;
-    // auto it = std::next(sequences_.begin(), 2);
+#if 0 
+    // only debugging
     for (const auto &x : sequences_)
     {
         std::cout << x.first << std::endl;
@@ -67,6 +68,7 @@ void DotPrinter::printSeqClones()
                 y.first);
         }
     }
+#endif
     for (const auto &seq : sequences_)
     {
         out_ << "subgraph seqclones" << seq.first << " {" << std::endl;

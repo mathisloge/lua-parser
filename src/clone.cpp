@@ -133,16 +133,17 @@ void Clone::run(const chunk &chunk)
     {
         cpu_timer timer_clones_step2;
         const int min_len = 2;
-        const int max_len = 9;
+        // Build the list structures describing sequences
+        const auto sequences = SeqBuilder{clones, min_len}(chunk).subsequences();
+        int max_len = 9;
+        for (const auto &s : sequences)
+        {
+            if (s.size() > max_len)
+                max_len = s.size();
+        }
         std::vector<int> range(max_len - 1);
         std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });
 
-        // Build the list structures describing sequences
-        const auto sequences = SeqBuilder{clones, min_len}(chunk).subsequences();
-        for (const auto &s : sequences)
-        {
-            std::cout << "S: " << s.size() << std::endl;
-        }
         // For k = MinimumSequenceLengthThreshold to MaximumSequenceLength
         for (auto k : range)
         {
@@ -170,13 +171,11 @@ void Clone::run(const chunk &chunk)
                     {
                         seq_bucket.emplace(sub_seq_hash, subseq);
                     }
-                    std::cout << "subseq: " << subseq.size() << " hash: " << sub_seq_hash << std::endl;
                 }
             }
             if (seq_bucket.size() == 0)
                 continue;
             // END Place all subsequences of length k into buckets according to subsequence hash
-            std::cout << "seq_bucket: " << seq_bucket.size() << std::endl;
 
             // BEGIN For each subsequence i and j in same bucket If CompareSequences (i,j,k) > SimilarityThreshold
             for (const auto bucket : seq_bucket)
@@ -210,10 +209,7 @@ void Clone::run(const chunk &chunk)
                         }
                     }
                 }
-                if (auto it = sequence_clones_.find(k); it != sequence_clones_.end())
-                    it->second.merge(bucket_same_seq);
-                else
-                    sequence_clones_.emplace(k, bucket_same_seq);
+                sequence_clones_.emplace(k, bucket_same_seq);
             }
             // END For each subsequence i and j in same bucket If CompareSequences (i,j,k) > SimilarityThreshold
         }
@@ -232,7 +228,7 @@ const Clones &Clone::clones() const
     return clones_;
 }
 
-const std::map<int, Sequence> &Clone::sequence_clones() const
+const std::multimap<int, Sequence> &Clone::sequence_clones() const
 {
     return sequence_clones_;
 }
