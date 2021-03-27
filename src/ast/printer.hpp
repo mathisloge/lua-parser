@@ -9,7 +9,7 @@ struct rexpr_printer
     static constexpr int const tabsize = 2;
     typedef void result_type;
 
-    rexpr_printer(int indent = 0);
+    rexpr_printer(int indent = 0, bool walk = true);
     void operator()(const chunk &ast) const;
     void operator()(ast::block const &block) const;
     void operator()(ast::stat const &stat) const;
@@ -21,6 +21,7 @@ struct rexpr_printer
     void operator()(const unary &unary) const;
     void operator()(const binary &bin) const;
     void operator()(const expression &expression) const;
+    void operator()(const prefixexp &expression) const;
     void operator()(const label &value) const;
     void operator()(const Name &value) const;
     void operator()(const funcname &value) const;
@@ -33,11 +34,12 @@ struct rexpr_printer
     void operator()(const fieldlist &value) const;
     void operator()(const tableconstructor &value) const;
     void operator()(const for_namelist &value) const;
-    void operator()(const prefixexp &value) const;
     void operator()(const functioncall &value) const;
     void operator()(const explist &value) const;
+    void operator()(const args &value) const;
     void operator()(const var &value) const;
     void operator()(const var_wrapper &value) const;
+    void operator()(const var_assign_or_list &value) const;
     void operator()(const varlist &value) const;
     void operator()(const primaryexpression &value) const;
     void operator()(const assign_or_call &value) const;
@@ -58,5 +60,6 @@ struct rexpr_printer
     void tab(int spaces) const;
 
     int indent;
+    bool walk_;
 };
 } // namespace sre::lua::ast

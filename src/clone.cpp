@@ -130,7 +130,6 @@ void Clone::run(const chunk &chunk)
     }
 
     std::cout << "unique clones after step1: " << clones.size() << std::endl;
-    std::multimap<int, Sequence> sequence_clones_;
     {
         cpu_timer timer_clones_step2;
         const int min_len = 2;
@@ -147,7 +146,7 @@ void Clone::run(const chunk &chunk)
         // For k = MinimumSequenceLengthThreshold to MaximumSequenceLength
         for (auto k : range)
         {
-            std::multimap<HashVal, Sequence> seq_bucket;
+            std::map<HashVal, Sequence> seq_bucket;
             // BEGIN Place all subsequences of length k into buckets according to subsequence hash
             for (const auto &s : sequences)
             {
@@ -156,14 +155,21 @@ void Clone::run(const chunk &chunk)
                 for (auto it = std::next(s.begin(), k - 1); it != s.end(); it++)
                 {
                     Sequence subseq;
-                    subseq.insert(*it);
+                    subseq.emplace(*it);
                     std::size_t sub_seq_hash = it->second;
                     for (auto pit = std::prev(it, k - 1); pit != it; pit++)
                     {
                         boost::hash_detail::hash_combine_impl(sub_seq_hash, pit->second);
-                        subseq.insert(*pit);
+                        subseq.emplace(*pit);
                     }
-                    seq_bucket.emplace(sub_seq_hash, subseq);
+                    if (auto it = seq_bucket.find(sub_seq_hash); it != seq_bucket.end())
+                    {
+                        it->second.merge(subseq);
+                    }
+                    else
+                    {
+                        seq_bucket.emplace(sub_seq_hash, subseq);
+                    }
                     std::cout << "subseq: " << subseq.size() << " hash: " << sub_seq_hash << std::endl;
                 }
             }
@@ -185,9 +191,9 @@ void Clone::run(const chunk &chunk)
 
                         // eigentlich muesste hier wieder ein vergleich ueber die Similarity{} gemacht werden.
                         // Allerdings unterstuetzt dies nur einen vergleich von zwei klonpaaren und nicht von klonen
-                        // beliebiger laenge. Eine nicht effinziente moeglichkeit waere, die Sequenzen i und j in paare
-                        // zu unterteilen und fuer jedes moegliche paar die Similarity{} aufzurufen. Dies wuerde
-                        // allerdings bei großen laengen zu langen laufzeiten fuehren.
+                        // beliebiger laenge. Eine nicht effinziente moeglichkeit waere, die Sequenzen i und j in
+                        // paare zu unterteilen und fuer jedes moegliche paar die Similarity{} aufzurufen. Dies
+                        // wuerde allerdings bei großen laengen zu langen laufzeiten fuehren.
                         if (i->second == j->second)
                         {
 
@@ -204,7 +210,10 @@ void Clone::run(const chunk &chunk)
                         }
                     }
                 }
-                sequence_clones_.emplace(k, bucket_same_seq);
+                if (auto it = sequence_clones_.find(k); it != sequence_clones_.end())
+                    it->second.merge(bucket_same_seq);
+                else
+                    sequence_clones_.emplace(k, bucket_same_seq);
             }
             // END For each subsequence i and j in same bucket If CompareSequences (i,j,k) > SimilarityThreshold
         }
@@ -212,7 +221,8 @@ void Clone::run(const chunk &chunk)
     }
     clones_ = clones;
 
-    std::cout << "clones step 2: " << sequence_clones_.size() << " " << sequence_clones_.rbegin()->second.size() << std::endl;
+    std::cout << "clones step 2: " << sequence_clones_.size() << " " << sequence_clones_.rbegin()->second.size()
+              << std::endl;
 
     std::cout << "Detection duration: " << timer_complete.format();
 }
@@ -222,7 +232,7 @@ const Clones &Clone::clones() const
     return clones_;
 }
 
-const std::multimap<int, Sequence> &Clone::sequence_clones() const
+const std::map<int, Sequence> &Clone::sequence_clones() const
 {
     return sequence_clones_;
 }

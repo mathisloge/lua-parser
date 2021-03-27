@@ -4,6 +4,7 @@
 #include <fstream>
 #include <memory>
 #include <type_traits>
+#include "printer.hpp"
 namespace sre::lua::ast
 {
 
@@ -12,13 +13,13 @@ namespace sre::lua::ast
     auto start_it = clones_.begin();                                                                                   \
     is<val_type, const val_type *>(var, start_it, clones_.end(), id);
 
-DotPrinter::DotPrinter(std::ostream &out, const Clones &clones, const std::multimap<int, Sequence> &sequences)
+DotPrinter::DotPrinter(std::ostream &out, const Clones &clones, const std::map<int, Sequence> &sequences)
     : out_{out}
     , clones_{clones}
     , sequences_{sequences}
     , counter{0}
 {
-    out_ << "digraph ninja {" << std::endl;
+    out_ << "digraph luaclones {" << std::endl;
     out_ << "node [fontsize=10, shape=box, height=0.25]" << std::endl;
     out_ << "edge [fontsize=10];" << std::endl;
 }
@@ -52,42 +53,55 @@ void DotPrinter::printClones()
 void DotPrinter::printSeqClones()
 {
     std::cout << " seq: seqclones_processed_: " << seqclones_processed_.size() << std::endl;
-    out_ << "subgraph seqclones {" << std::endl;
-    auto it = sequences_.rbegin();
-    if (it != sequences_.rend())
+    // auto it = std::next(sequences_.begin(), 2);
+    for (const auto &x : sequences_)
     {
-        std::vector<int> all_ids;
-        for (const auto &c : it->second)
+        std::cout << x.first << std::endl;
+        for (const auto &y : x.second)
         {
-            for (const auto &clone : seqclones_processed_)
-            {
-                std::visit(
-                    [&](auto y) {
-                        std::visit(
-                            [&](auto x) {
-                                if (reinterpret_cast<intptr_t>(x) == reinterpret_cast<intptr_t>(y))
-                                {
-                                     std::cout << "FOND2" << std::endl;
-                                }
-                            },
-                            clone.first);
-                    },
-                    c.first);
-                if (clone.first == c.first)
-                {
-                    all_ids.push_back(clone.second);
-                    std::cout << "FOND" << std::endl;
-                }
-            }
-        }
-        for (auto id = all_ids.begin() + 1; id != all_ids.end(); id++)
-        {
-            out_ << "\t"
-                 << "\"" << *(id - 1) << "\" -> "
-                 << "\"" << *id << "\" [style=dashed, color=blue, dir=none]" << std::endl;
+            std::visit(
+                [](auto x) {
+                    std::cout << reinterpret_cast<intptr_t>(x) << " => ";
+                    rexpr_printer{0, false}(*x);
+                },
+                y.first);
         }
     }
-    out_ << "}" << std::endl;
+    for (const auto &seq : sequences_)
+    {
+        out_ << "subgraph seqclones" << seq.first << " {" << std::endl;
+        std::set<int> all_ids;
+        for (const auto &c : seq.second)
+        {
+            bool found = false;
+            for (const auto &clone : seqclones_processed_)
+            {
+                if (clone.first == c.first)
+                {
+                    found = true;
+                    std::cout << "FOND" << std::endl;
+                    all_ids.emplace(clone.second);
+                    break;
+                }
+            }
+            // only for debugging
+            if (true && !found)
+            {
+                std::cout << "not found: ";
+                std::visit([](auto x) { rexpr_printer{0, true}(*x); }, c.first);
+            }
+        }
+        if (all_ids.size() > 1)
+        {
+            for (auto id = std::next(all_ids.begin()); id != all_ids.end(); id++)
+            {
+                out_ << "\t"
+                     << "\"" << *(std::prev(id)) << "\" -> "
+                     << "\"" << *id << "\" [style=dashed, color=blue, dir=none]" << std::endl;
+            }
+        }
+        out_ << "}" << std::endl;
+    }
 }
 
 void DotPrinter::operator()(const chunk &ast)
@@ -114,6 +128,8 @@ void DotPrinter::operator()(const int parent, const ast::block &block)
 void DotPrinter::operator()(const int parent, const ast::stat &stat)
 {
     const auto self = getId();
+    seqclones_processed_.emplace_back(Unit{&stat}, self);
+
     IS(stat, self)
     node(self, "stat", Unit{&stat});
     edge(parent, self);
@@ -134,21 +150,21 @@ void DotPrinter::operator()(const int parent, const double value)
 {
     const auto self = getId();
     // IS(value, self)
-    node(self, "double", Unit{});
+    node(self, "double=" + std::to_string(value), Unit{});
     edge(parent, self);
 }
 void DotPrinter::operator()(const int parent, const unsigned value)
 {
     const auto self = getId();
     // IS(value, self)
-    node(self, "unsigned", Unit{});
+    node(self, "unsigned=" + std::to_string(value), Unit{});
     edge(parent, self);
 }
 void DotPrinter::operator()(const int parent, const bool value)
 {
     const auto self = getId();
     // IS(value, self)
-    node(self, "bool", Unit{});
+    node(self, "bool=" + std::to_string(value), Unit{});
     edge(parent, self);
 }
 void DotPrinter::operator()(const int parent, const unary &value)
@@ -171,8 +187,13 @@ void DotPrinter::operator()(const int parent, const binary &value)
 }
 void DotPrinter::operator()(const int parent, const expression &value)
 {
-    (*this)(parent, value.first_);
-    (*this)(parent, value.rest_);
+    const auto self = getId();
+    IS(value, self)
+    node(self, "expression", Unit{&value});
+    edge(parent, self);
+
+    (*this)(self, value.first_);
+    (*this)(self, value.rest_);
 }
 void DotPrinter::operator()(const int parent, const label &value)
 {
@@ -186,7 +207,7 @@ void DotPrinter::operator()(const int parent, const Name &value)
 {
     const auto self = getId();
     // IS(value, self)
-    node(self, "Name", Unit{});
+    node(self, "Name=" + value.name, Unit{});
     edge(parent, self);
 }
 void DotPrinter::operator()(const int parent, const funcname &value)
@@ -322,8 +343,12 @@ void DotPrinter::operator()(const int parent, const var &value)
 }
 void DotPrinter::operator()(const int parent, const var_wrapper &value)
 {
-    (*this)(parent, value.var_);
-    (*this)(parent, value.next_);
+    const auto self = getId();
+    IS(value, self)
+    node(self, "var_wrapper", Unit{&value});
+    edge(parent, self);
+    (*this)(self, value.var_);
+    (*this)(self, value.next_);
 }
 void DotPrinter::operator()(const int parent, const varlist &value)
 {
@@ -337,13 +362,21 @@ void DotPrinter::operator()(const int parent, const varlist &value)
 }
 void DotPrinter::operator()(const int parent, const primaryexpression &value)
 {
-    (*this)(parent, value.first_);
-    (*this)(parent, value.rest_);
+    const auto self = getId();
+    IS(value, self)
+    node(self, "primaryexpression", Unit{&value});
+    edge(parent, self);
+    (*this)(self, value.first_);
+    (*this)(self, value.rest_);
 }
 void DotPrinter::operator()(const int parent, const assign_or_call &value)
 {
-    (*this)(parent, value.primaryexp_);
-    boost::apply_visitor([=](const auto &any) { (*this)(parent, any); }, value.var_action_);
+    const auto self = getId();
+    IS(value, self)
+    node(self, "assign_or_call", Unit{&value});
+    edge(parent, self);
+    (*this)(self, value.primaryexp_);
+    boost::apply_visitor([=](const auto &any) { (*this)(self, any); }, value.var_action_);
 }
 void DotPrinter::operator()(const int parent, const ifelse &value)
 {
