@@ -79,7 +79,6 @@ void DotPrinter::printSeqClones()
                 if (clone.first == c.first)
                 {
                     found = true;
-                    std::cout << "FOND" << std::endl;
                     all_ids.emplace(clone.second);
                     break;
                 }
