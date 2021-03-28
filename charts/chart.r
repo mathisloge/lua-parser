@@ -1,7 +1,7 @@
 library(ggplot2)
 luarocks <- read.csv(file = 'luarocks.csv')
-second <- read.csv(file = 'second.csv')
-projectfile <- rbind(second, luarocks)
+koreader <- read.csv(file = 'koreader.csv')
+projectfile <- rbind(koreader, luarocks)
 head(projectfile)
 
 plot_clones_loc <- ggplot(projectfile, aes(x = loc, y = nclones, fill=project)) + 
