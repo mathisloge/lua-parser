@@ -11,7 +11,8 @@ class Similarity final : public boost::static_visitor<>
     Similarity();
     double run(const Unit &a, const Unit &b);
 
-    // simple forward declaration since we need to use templates in this case..
+    // simple forward declaration since we need to use templates in this case and the resulting types are sometimes
+    // forward declarations
     template <typename Ta>
     void operator()(const x3::forward_ast<Ta> &a, const x3::forward_ast<Ta> &b)
     {

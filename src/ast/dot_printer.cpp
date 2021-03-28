@@ -13,7 +13,7 @@ namespace sre::lua::ast
     auto start_it = clones_.begin();                                                                                   \
     is<val_type, const val_type *>(var, start_it, clones_.end(), id);
 
-DotPrinter::DotPrinter(std::ostream &out, const Clones &clones, const std::multimap<int, Sequence> &sequences)
+DotPrinter::DotPrinter(std::ostream &out, const Clones &clones, const SequenceClones &sequences)
     : out_{out}
     , clones_{clones}
     , sequences_{sequences}

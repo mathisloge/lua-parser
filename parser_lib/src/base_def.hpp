@@ -48,8 +48,9 @@ const auto genDelimStr = [](char delim) {
     return x3::lexeme[omit[delim] > *(char_("\\\\") | '\\' >> -char_(delim) | (char_ - delim)) > omit[delim]];
 };
 
+inline const auto lit_multimline_str = x3::lexeme[omit["[["] >> *(char_ - "]]") >> omit["]]"]];
 
-inline const auto literal_str_expr_def = genDelimStr('"') | genDelimStr('\'');
+inline const auto literal_str_expr_def = lit_multimline_str | genDelimStr('"') | genDelimStr('\'');
 // a name can't be any keyword, so exclude it.
 inline const auto name_expr_def = raw[unchecked_name - distinct_keyword];
 

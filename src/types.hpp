@@ -3,6 +3,7 @@
 #include <tuple>
 #include <variant>
 #include <vector>
+#include <map>
 #include <ast/ast.hpp>
 namespace sre::lua::ast
 {
@@ -60,4 +61,5 @@ using Ccit = Clones::const_iterator;
 using SeqItem = std::pair<Unit, HashVal>;
 using Sequence = std::set<SeqItem>;
 using AllSequences = std::vector<Sequence>;
+using SequenceClones = std::multimap<int, Sequence>;
 } // namespace sre::lua::ast

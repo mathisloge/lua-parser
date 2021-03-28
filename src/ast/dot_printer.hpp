@@ -10,7 +10,7 @@ namespace sre::lua::ast
 class DotPrinter final
 {
   public:
-    DotPrinter(std::ostream &out, const Clones &clones, const std::multimap<int, Sequence> &sequences);
+    DotPrinter(std::ostream &out, const Clones &clones, const SequenceClones &sequences);
     void operator()(const chunk &ast);
     ~DotPrinter();
 

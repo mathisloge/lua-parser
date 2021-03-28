@@ -130,12 +130,14 @@ void Clone::run(const chunk &chunk)
     }
 
     std::cout << "unique clones after step1: " << clones.size() << std::endl;
+
+    if constexpr (true)
     {
         cpu_timer timer_clones_step2;
         const int min_len = 2;
         // Build the list structures describing sequences
         const auto sequences = SeqBuilder{clones, min_len}(chunk).subsequences();
-        int max_len = 9;
+        int max_len = min_len + 1;
         for (const auto &s : sequences)
         {
             if (s.size() > max_len)
@@ -192,7 +194,8 @@ void Clone::run(const chunk &chunk)
                         // Allerdings unterstuetzt dies nur einen vergleich von zwei klonpaaren und nicht von klonen
                         // beliebiger laenge. Eine nicht effinziente moeglichkeit waere, die Sequenzen i und j in
                         // paare zu unterteilen und fuer jedes moegliche paar die Similarity{} aufzurufen. Dies
-                        // wuerde allerdings bei großen laengen zu langen laufzeiten fuehren.
+                        // wuerde allerdings bei großen laengen zu langen laufzeiten fuehren. Daher wird in diesem Fall
+                        // der aus den Sequenzbestandteilen kombinierte Hash auf gleichheit Überprüft.
                         if (i->second == j->second)
                         {
 
@@ -228,7 +231,7 @@ const Clones &Clone::clones() const
     return clones_;
 }
 
-const std::multimap<int, Sequence> &Clone::sequence_clones() const
+const SequenceClones &Clone::sequence_clones() const
 {
     return sequence_clones_;
 }

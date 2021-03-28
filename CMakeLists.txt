@@ -21,6 +21,7 @@ add_executable(LuaParser
     src/walker.cpp
     src/similarity.cpp
     src/seq_builder.cpp
+    src/metrics.cpp
 )
 
 if(MSVC)

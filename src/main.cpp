@@ -1,6 +1,8 @@
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <streambuf>
 #include <string>
 #include <thread>
@@ -9,11 +11,12 @@
 #include "clone.hpp"
 #include "cxxopts.hpp"
 #include "hasher.hpp"
+#include "metrics.hpp"
 #include "parser.hpp"
 #include "runtime_config.hpp"
 namespace fs = std::filesystem;
 
-int parsefile(const std::string &file);
+int parsefile(const std::string &file, sre::lua::ast::Metrics &metrics);
 int main(int argc, char **argv)
 {
     cxxopts::Options options(argv[0], "Lua Typ-1 und Typ-2 Klonerkennung nach Baxter");
@@ -52,23 +55,25 @@ int main(int argc, char **argv)
     }
     if (std::filesystem::is_regular_file(parse_path))
     {
-        parsefile(parse_path.string());
+        sre::lua::ast::Metrics metrics{"debug", "debug.csv"};
+        parsefile(parse_path.string(), metrics);
     }
     else
     {
+        sre::lua::ast::Metrics metrics{"luarocks", "luarocks.csv"};
         const std::string extension{result["extension"].as<std::string>()};
         std::cout << "using extension: " << extension << std::endl;
         std::vector<std::thread> threads_;
         for (auto &p : fs::recursive_directory_iterator(parse_path))
         {
-            auto run_parse = [&extension, p]() {
+            auto run_parse = [&metrics, &extension, p]() {
                 if (p.path().has_extension() && p.path().extension() == extension)
                 {
                     std::cout << p.path() << '\n';
 
                     try
                     {
-                        parsefile(p.path().string());
+                        parsefile(p.path().string(), metrics);
                     }
                     catch (std::exception e)
                     {
@@ -76,16 +81,18 @@ int main(int argc, char **argv)
                     }
                 }
             };
-            run_parse();
+            threads_.emplace_back(run_parse);
+            // run_parse();
         }
         for (auto &t : threads_)
         {
             if (t.joinable())
                 t.join();
         }
+        metrics.saveMetrics();
     }
 }
-int parsefile(const std::string &file)
+int parsefile(const std::string &file, sre::lua::ast::Metrics &metrics)
 {
     sre::lua::ast::chunk chunk;
 
@@ -106,6 +113,14 @@ int parsefile(const std::string &file)
         cloner.run(chunk);
         sre::lua::ast::DotPrinter printer{ofs, cloner.clones(), cloner.sequence_clones()};
         printer(chunk);
+
+        std::size_t loc = 0;
+        for (const auto c : str)
+        {
+            if (c == '\n')
+                loc++;
+        }
+        metrics.addChunkResult(file, std::move(chunk), loc, cloner.clones(), cloner.sequence_clones());
     }
     else
     {
@@ -114,6 +129,7 @@ int parsefile(const std::string &file)
         std::cout << "Parsing failed for file " << file << std::endl;
         // std::cout << "stopped at: \": " << context << "...\"\n";
         std::cout << "-------------------------\n";
+        metrics.parsedFailed(file);
         return 1;
     }
     return 0;
