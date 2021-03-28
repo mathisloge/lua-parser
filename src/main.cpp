@@ -25,6 +25,8 @@ int main(int argc, char **argv)
         ("p,path", "Datei oder Ordner die zu puefen sind", cxxopts::value<std::string>()->default_value("testdir"))
         ("e,extension", "Falls die Extension der Lua-Datein innerhalb eines Ordners anders sein sollten", cxxopts::value<std::string>()->default_value(".lua"))
         ("t,type", "Typ 1 oder 2", cxxopts::value<int>()->default_value("2"))
+        ("n,name", "Project name", cxxopts::value<std::string>())
+        ("d,dot", "Generate dot files", cxxopts::value<bool>()->default_value("true"))
         ("h,help", "Print help");
     // clang-format on
     auto result = options.parse(argc, argv);
@@ -32,6 +34,12 @@ int main(int argc, char **argv)
     {
         std::cout << options.help() << std::endl;
         exit(0);
+    }
+    if (result.count("name") <= 0)
+    {
+        std::cout << "Name is missing" << std::endl;
+        std::cout << options.help() << std::endl;
+        exit(1);
     }
 
     if (result["type"].as<int>() == 1)
@@ -60,7 +68,8 @@ int main(int argc, char **argv)
     }
     else
     {
-        sre::lua::ast::Metrics metrics{"luarocks", "luarocks.csv"};
+        const auto projname = result["name"].as<std::string>();
+        sre::lua::ast::Metrics metrics{projname, projname + ".csv"};
         const std::string extension{result["extension"].as<std::string>()};
         std::cout << "using extension: " << extension << std::endl;
         std::vector<std::thread> threads_;
