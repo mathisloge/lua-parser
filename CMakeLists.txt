@@ -6,7 +6,7 @@ project(LuaParser
         LANGUAGES CXX)
 
 find_package(Boost REQUIRED COMPONENTS timer)
-
+find_package(Threads REQUIRED)
 
 add_subdirectory(parser_lib)
 
@@ -31,7 +31,22 @@ endif()
 set_property(TARGET LuaParser PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(LuaParser PRIVATE
+    Threads::Threads
     Boost::headers
     Boost::timer
     lua-parser-lib
 )
+
+set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_IGNORE_FILES
+  /.git
+  /.vscode
+  /dist
+  /.*build.*
+  /\\\\.DS_Store
+  /*.pdf
+)
+
+
+set(CPACK_SOURCE_PACKAGE_FILE_NAME ${PROJECT_NAME})
+include(CPack)
