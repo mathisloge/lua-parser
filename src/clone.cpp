@@ -8,6 +8,7 @@
 #include "bucketer.hpp"
 #include "hasher.hpp"
 #include "mass.hpp"
+#include "runtime_config.hpp"
 #include "seq_builder.hpp"
 #include "similarity.hpp"
 #include "walker.hpp"
@@ -44,7 +45,7 @@ void Clone::run(const chunk &chunk)
     BucketList buckets;
     {
         cpu_timer timer_bucket;
-        Bucketer{buckets, 6}.toBuckets(chunk);
+        Bucketer{buckets, static_cast<std::size_t>(RuntimeConfig::min_mass)}.toBuckets(chunk);
         std::cout << "bucket duration: " << timer_bucket.format();
     }
 
@@ -134,14 +135,21 @@ void Clone::run(const chunk &chunk)
     if constexpr (true)
     {
         cpu_timer timer_clones_step2;
-        const int min_len = 2;
+        const int min_len = RuntimeConfig::min_seq;
         // Build the list structures describing sequences
-        const auto sequences = SeqBuilder{clones, min_len}(chunk).subsequences();
+        const auto sequences = SeqBuilder{clones, static_cast<std::size_t>(min_len)}(chunk).subsequences();
         int max_len = min_len + 1;
-        for (const auto &s : sequences)
+        if (RuntimeConfig::max_seq <= 0)
         {
-            if (s.size() > max_len)
-                max_len = s.size();
+            for (const auto &s : sequences)
+            {
+                if (s.size() > max_len)
+                    max_len = static_cast<int>(s.size());
+            }
+        }
+        else
+        {
+            max_len = RuntimeConfig::max_seq;
         }
         std::vector<int> range(max_len - 1);
         std::generate(range.begin(), range.end(), [n = min_len]() mutable { return n++; });

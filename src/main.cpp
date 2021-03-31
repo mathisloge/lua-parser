@@ -25,6 +25,9 @@ int main(int argc, char **argv)
         ("p,path", "Datei oder Ordner die zu puefen sind", cxxopts::value<std::string>()->default_value("testdir"))
         ("e,extension", "Falls die Extension der Lua-Datein innerhalb eines Ordners anders sein sollten", cxxopts::value<std::string>()->default_value(".lua"))
         ("t,type", "Typ 1 oder 2", cxxopts::value<int>()->default_value("2"))
+        ("s,msequence", "Minimale Sequenzlaenge", cxxopts::value<int>()->default_value("2"))
+        ("x,xsequence", "Maximale Sequenzlaenge", cxxopts::value<int>())
+        ("m,mass", "Minimale Masse eines Teilbaums", cxxopts::value<int>()->default_value("6"))
         ("n,name", "Project name", cxxopts::value<std::string>())
         ("d,dot", "Generate dot files", cxxopts::value<bool>()->default_value("true"))
         ("h,help", "Print help");
@@ -51,6 +54,13 @@ int main(int argc, char **argv)
     {
         RuntimeConfig::clone_type = RuntimeConfig::CloneType::type2;
         std::cout << "Detecting type 2 clones" << std::endl;
+    }
+
+    RuntimeConfig::min_mass = result["mass"].as<int>();
+    RuntimeConfig::min_seq = result["msequence"].as<int>();
+    if (result.count("xsequence"))
+    {
+        RuntimeConfig::max_seq = result["xsequence"].as<int>();
     }
 
     const std::filesystem::path parse_path{result["path"].as<std::string>()};

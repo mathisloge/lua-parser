@@ -1,0 +1,5 @@
+project,file,loc,nclones,nsequences,maxseqlen
+apisix_t1,testdir/apisix/t\fake-plugin-exit.lua,46,0,0,0
+apisix_t1,testdir/apisix/t\lib\server.lua,392,200,0,0
+apisix_t1,testdir/apisix/t\lib\test_admin.lua,267,46,0,0
+apisix_t1,testdir/apisix/t\script\script_test.lua,43,0,0,0
