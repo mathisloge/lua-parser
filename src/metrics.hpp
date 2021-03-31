@@ -16,10 +16,14 @@ class Metrics final
     void saveMetrics();
 
   private:
+    void saveMassClones();
+
+  private:
     const std::string project_;
     const std::string output_file_name_;
     // filename, <chunk, loc, clones, sequences>
     std::map<std::string, std::tuple<chunk, std::size_t, Clones, SequenceClones>> all_results_;
     std::vector<std::string> all_failed_;
+    std::map<int, int> mass_clones_res_;
 };
 } // namespace sre::lua::ast
